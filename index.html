@@ -1,0 +1,1976 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Detective AI — Case Files</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#14110D;
+  --ink-2:#1B1712;
+  --ink-3:#231D16;
+  --paper:#EAE0C4;
+  --paper-dim:#D8C9A0;
+  --paper-line:#c9b98a;
+  --blood:#8A2530;
+  --blood-bright:#B8323F;
+  --brass:#B4903D;
+  --brass-bright:#D8B15C;
+  --teal:#24413F;
+  --teal-bright:#356460;
+  --text:#ECE3CB;
+  --text-muted:#9C9078;
+  --text-faint:#6d6552;
+  --font-display:'Special Elite', cursive;
+  --font-body:'Crimson Text', serif;
+  --font-mono:'Courier Prime', monospace;
+  --radius:3px;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:
+    radial-gradient(ellipse at 50% -10%, #2a241a 0%, transparent 55%),
+    var(--ink);
+  color:var(--text);
+  font-family:var(--font-body);
+  font-size:17px;
+  line-height:1.5;
+  min-height:100vh;
+  position:relative;
+  overflow-x:hidden;
+}
+body::before{
+  content:"";
+  position:fixed;inset:0;
+  pointer-events:none;
+  background-image:
+    repeating-linear-gradient(0deg, rgba(0,0,0,0.06) 0px, rgba(0,0,0,0.06) 1px, transparent 1px, transparent 3px);
+  opacity:.35;
+  z-index:9000;
+  mix-blend-mode:overlay;
+}
+@media (prefers-reduced-motion:no-preference){
+  .lamp-flicker{animation:flicker 7s infinite;}
+}
+@keyframes flicker{
+  0%,93%,100%{opacity:1;}
+  94%{opacity:.85;}
+  95%{opacity:1;}
+  96%{opacity:.7;}
+  97%{opacity:1;}
+}
+h1,h2,h3,.font-display{font-family:var(--font-display);letter-spacing:.02em;font-weight:400;}
+.mono{font-family:var(--font-mono);}
+::selection{background:var(--blood);color:var(--paper);}
+a{color:var(--brass-bright);}
+button{font-family:var(--font-body);cursor:pointer;}
+button:focus-visible, [tabindex]:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible{
+  outline:2px solid var(--brass-bright); outline-offset:2px;
+}
+.hidden{display:none !important;}
+
+/* ===== Layout shell ===== */
+#app{max-width:1180px;margin:0 auto;padding:18px 20px 60px;position:relative;z-index:1;}
+
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 16px;background:linear-gradient(180deg,var(--ink-3),var(--ink-2));
+  border:1px solid #35301f;border-radius:var(--radius);
+  margin-bottom:16px;flex-wrap:wrap;gap:10px;
+}
+.brand{display:flex;align-items:center;gap:10px;}
+.brand .badge{
+  width:34px;height:34px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%, var(--brass-bright), var(--brass) 60%, #7a5f22 100%);
+  display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--ink);
+  box-shadow:0 0 0 2px #000 inset, 0 2px 6px rgba(0,0,0,.5);
+}
+.brand h1{font-size:19px;margin:0;color:var(--brass-bright);}
+.brand small{display:block;color:var(--text-faint);font-size:11px;letter-spacing:.12em;text-transform:uppercase;}
+.nav-tabs{display:flex;gap:6px;flex-wrap:wrap;}
+.nav-tabs button{
+  background:transparent;border:1px solid #3a3424;color:var(--text-muted);
+  padding:7px 12px;border-radius:var(--radius);font-size:13px;letter-spacing:.03em;
+  transition:.15s;
+}
+.nav-tabs button:hover{border-color:var(--brass);color:var(--paper);}
+.nav-tabs button.active{background:var(--brass);color:var(--ink);border-color:var(--brass);font-weight:700;}
+.hud{display:flex;align-items:center;gap:14px;font-family:var(--font-mono);font-size:13px;color:var(--paper-dim);}
+.hud .clock{color:var(--blood-bright);font-weight:700;}
+.hud .clock.low{animation:flicker 1s infinite;}
+.iconbtn{background:none;border:1px solid #3a3424;color:var(--text-muted);border-radius:var(--radius);padding:6px 9px;font-size:12px;}
+.iconbtn:hover{color:var(--paper);border-color:var(--brass);}
+
+/* ===== Views ===== */
+.view{animation:fadeIn .35s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+.panel{
+  background:linear-gradient(180deg, var(--ink-3), var(--ink-2));
+  border:1px solid #35301f;border-radius:var(--radius);
+  padding:22px;margin-bottom:16px;
+}
+.section-title{
+  font-family:var(--font-display);color:var(--brass-bright);font-size:15px;
+  letter-spacing:.1em;text-transform:uppercase;margin:0 0 14px;
+  border-bottom:1px solid #3a3424;padding-bottom:8px;
+}
+
+/* HOME */
+.hero{
+  text-align:center;padding:50px 20px 40px;position:relative;
+}
+.hero h1{font-size:clamp(30px,5vw,52px);color:var(--paper);margin:0 0 6px;text-shadow:0 2px 0 #000;}
+.hero .tag{color:var(--blood-bright);font-family:var(--font-mono);letter-spacing:.15em;text-transform:uppercase;font-size:13px;}
+.hero p.lede{max-width:560px;margin:18px auto 0;color:var(--text-muted);font-style:italic;font-size:18px;}
+.menu-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;max-width:760px;margin:34px auto 0;}
+.menu-btn{
+  background:var(--ink-3);border:1px solid #3a3424;color:var(--paper);
+  padding:18px 16px;border-radius:var(--radius);text-align:left;font-size:16px;
+  display:flex;align-items:center;gap:12px;transition:.15s;
+}
+.menu-btn:hover{border-color:var(--brass-bright);background:#26210f;transform:translateY(-1px);}
+.menu-btn .ic{font-size:22px;}
+.menu-btn small{display:block;color:var(--text-faint);font-size:12px;font-family:var(--font-mono);margin-top:2px;}
+.menu-btn.primary{background:linear-gradient(180deg,var(--blood-bright),var(--blood));border-color:#5c1620;color:var(--paper);}
+.menu-btn.primary small{color:#e8b9bd;}
+.diff-row{display:flex;gap:10px;justify-content:center;margin-top:24px;flex-wrap:wrap;}
+.diff-chip{padding:8px 18px;border-radius:20px;border:1px solid #3a3424;background:var(--ink-3);color:var(--text-muted);font-family:var(--font-mono);font-size:13px;}
+.diff-chip.active{background:var(--brass);color:var(--ink);border-color:var(--brass);font-weight:700;}
+
+.stats-strip{display:flex;gap:22px;justify-content:center;flex-wrap:wrap;margin-top:26px;font-family:var(--font-mono);font-size:13px;color:var(--text-faint);}
+.stats-strip b{color:var(--brass-bright);display:block;font-size:20px;font-family:var(--font-display);}
+
+/* CASE SELECT */
+.case-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;margin-top:6px;}
+.case-card{
+  background:var(--ink-3);border:1px solid #3a3424;border-radius:var(--radius);
+  padding:18px 16px;text-align:left;position:relative;transition:.15s;
+  display:flex;flex-direction:column;gap:4px;
+}
+.case-card:hover{border-color:var(--brass-bright);transform:translateY(-2px);background:#26210f;}
+.case-card .case-icon{font-size:30px;margin-bottom:6px;}
+.case-card .case-crime{font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;color:var(--blood-bright);}
+.case-card b{font-family:var(--font-display);color:var(--paper);font-size:16px;margin:2px 0 4px;}
+.case-card .case-tagline{color:var(--text-faint);font-size:13px;font-style:italic;}
+.solved-tag{
+  position:absolute;top:10px;right:10px;background:var(--brass);color:var(--ink);
+  font-size:10px;padding:3px 7px;border-radius:8px;font-family:var(--font-mono);font-weight:700;
+}
+
+/* BRIEFING */
+.briefing-card{max-width:700px;margin:0 auto;}
+.briefing-card .stamp{
+  display:inline-block;border:2px solid var(--blood-bright);color:var(--blood-bright);
+  padding:3px 10px;transform:rotate(-4deg);font-family:var(--font-mono);font-weight:700;letter-spacing:.1em;
+  font-size:12px;margin-bottom:14px;
+}
+.briefing-card p{color:var(--paper-dim);}
+.photo-frame{
+  width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,#3a3424,#1c1810);
+  display:flex;align-items:center;justify-content:center;font-size:46px;margin:0 auto 16px;border:3px solid var(--brass);
+}
+
+/* SCENE */
+.loc-tabs{display:flex;gap:8px;overflow-x:auto;margin-bottom:16px;padding-bottom:4px;}
+.loc-tabs button{
+  flex:0 0 auto;background:var(--ink-3);border:1px solid #3a3424;color:var(--text-muted);
+  padding:9px 14px;border-radius:var(--radius);font-size:14px;white-space:nowrap;
+}
+.loc-tabs button.active{background:var(--teal-bright);border-color:var(--teal-bright);color:var(--paper);font-weight:700;}
+.loc-desc{color:var(--text-muted);font-style:italic;margin-bottom:16px;}
+.object-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;}
+.object-card{
+  background:var(--ink-3);border:1px solid #3a3424;border-radius:var(--radius);
+  padding:16px 12px;text-align:center;transition:.15s;position:relative;
+}
+.object-card:hover{border-color:var(--brass);transform:translateY(-2px);}
+.object-card .ic{font-size:30px;display:block;margin-bottom:8px;}
+.object-card .name{font-size:13px;color:var(--paper);}
+.object-card.done{opacity:.55;}
+.object-card .found-tag{
+  position:absolute;top:6px;right:6px;background:var(--brass);color:var(--ink);
+  font-size:9px;padding:2px 5px;border-radius:8px;font-family:var(--font-mono);font-weight:700;
+}
+
+/* SUSPECTS */
+.suspect-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px;}
+.suspect-card{
+  background:var(--ink-3);border:1px solid #3a3424;border-radius:var(--radius);
+  padding:16px;text-align:center;transition:.15s;
+}
+.suspect-card:hover{border-color:var(--brass);}
+.suspect-card .portrait{
+  width:64px;height:64px;border-radius:50%;margin:0 auto 10px;
+  background:radial-gradient(circle at 35% 30%, #3f3928, #1c1810);
+  display:flex;align-items:center;justify-content:center;font-size:30px;border:2px solid var(--brass);
+}
+.suspect-card .role{color:var(--text-faint);font-size:12px;font-family:var(--font-mono);margin-top:2px;}
+.chat-wrap{display:flex;flex-direction:column;height:520px;max-height:70vh;}
+.chat-header{display:flex;align-items:center;gap:10px;padding-bottom:12px;border-bottom:1px solid #3a3424;margin-bottom:10px;}
+.chat-log{flex:1;overflow-y:auto;padding:10px 4px;display:flex;flex-direction:column;gap:10px;}
+.bubble{max-width:78%;padding:10px 13px;border-radius:10px;font-size:15px;line-height:1.45;}
+.bubble.you{align-self:flex-end;background:var(--teal-bright);color:var(--paper);border-bottom-right-radius:2px;}
+.bubble.them{align-self:flex-start;background:var(--paper);color:#241f16;border-bottom-left-radius:2px;font-family:var(--font-body);}
+.bubble.them.thinking{color:#5b5340;font-style:italic;}
+.bubble .who{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.08em;opacity:.65;margin-bottom:3px;font-family:var(--font-mono);}
+.chat-input-row{display:flex;gap:8px;margin-top:10px;}
+.chat-input-row input{
+  flex:1;background:var(--ink);border:1px solid #3a3424;color:var(--text);
+  padding:11px 12px;border-radius:var(--radius);font-family:var(--font-body);font-size:15px;
+}
+.chat-input-row button{background:var(--brass);border:none;color:var(--ink);padding:0 18px;border-radius:var(--radius);font-weight:700;}
+.chat-input-row button:disabled{opacity:.5;cursor:not-allowed;}
+.present-row{display:flex;gap:8px;margin-top:8px;align-items:center;flex-wrap:wrap;}
+.present-row select{background:var(--ink);color:var(--text);border:1px solid #3a3424;border-radius:var(--radius);padding:7px;font-size:13px;flex:1;min-width:160px;}
+.present-row button{background:var(--blood-bright);border:none;color:var(--paper);padding:7px 12px;border-radius:var(--radius);font-size:13px;}
+
+/* EVIDENCE BOARD */
+.board-wrap{position:relative;background:
+  radial-gradient(circle at 20% 20%, rgba(255,255,255,.03), transparent 40%),
+  repeating-linear-gradient(45deg, #3a3020 0 2px, #362c1e 2px 4px);
+  border:10px solid #4a3c26;border-radius:4px;padding:24px;min-height:420px;
+}
+.board-cols{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+@media (max-width:700px){.board-cols{grid-template-columns:1fr;}}
+.board-col h4{font-family:var(--font-display);color:var(--brass-bright);font-size:13px;text-transform:uppercase;letter-spacing:.1em;margin:0 0 10px;}
+.pin-card{
+  background:var(--paper);color:#241f16;border-radius:2px;padding:10px 12px;margin-bottom:10px;
+  box-shadow:0 3px 8px rgba(0,0,0,.5);position:relative;font-size:13px;cursor:pointer;
+  transform:rotate(var(--r,-1deg));transition:.15s;border:1px solid #c9b98a;
+}
+.pin-card:nth-child(even){--r:1deg;}
+.pin-card:hover{transform:rotate(0deg) scale(1.02);z-index:2;}
+.pin-card.selected{outline:2px solid var(--blood-bright);}
+.pin-card::before{
+  content:"📌";position:absolute;top:-10px;left:50%;transform:translateX(-50%);font-size:16px;
+}
+.pin-card b{display:block;font-family:var(--font-display);font-size:13px;margin-bottom:3px;}
+.pin-card .desc{color:#4a4330;font-size:12.5px;}
+.connections-hint{color:var(--text-faint);font-size:12px;margin-top:14px;font-family:var(--font-mono);text-align:center;}
+.conn-list{margin-top:14px;display:flex;flex-wrap:wrap;gap:8px;}
+.conn-chip{background:var(--ink-3);border:1px solid var(--blood-bright);color:var(--paper);font-size:12px;padding:5px 10px;border-radius:12px;font-family:var(--font-mono);}
+.conn-chip button{background:none;border:none;color:var(--blood-bright);margin-left:6px;font-weight:700;}
+.notes-area{width:100%;min-height:90px;background:var(--paper);color:#241f16;border:none;border-radius:2px;padding:12px;font-family:var(--font-mono);font-size:13px;margin-top:14px;resize:vertical;}
+
+/* PUZZLE MODAL */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;
+  z-index:5000;padding:20px;
+}
+.modal{
+  background:var(--ink-2);border:1px solid var(--brass);border-radius:var(--radius);
+  padding:26px;max-width:520px;width:100%;max-height:85vh;overflow:auto;
+}
+.modal h3{color:var(--brass-bright);margin-top:0;}
+.slider-row{display:flex;align-items:center;gap:12px;margin:16px 0;}
+.slider-row input[type=range]{flex:1;}
+.decoded-box{
+  background:var(--paper);color:#241f16;font-family:var(--font-mono);padding:14px;border-radius:2px;
+  min-height:50px;font-size:15px;letter-spacing:.04em;word-break:break-word;
+}
+.keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:220px;margin:16px auto;}
+.keypad button{padding:14px;font-size:18px;background:var(--ink-3);border:1px solid #3a3424;color:var(--paper);border-radius:var(--radius);}
+.keypad button:hover{border-color:var(--brass);}
+.code-display{font-family:var(--font-mono);font-size:26px;letter-spacing:.3em;text-align:center;color:var(--brass-bright);margin:10px 0;min-height:34px;}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:18px;flex-wrap:wrap;}
+.btn{background:var(--brass);border:none;color:var(--ink);padding:9px 16px;border-radius:var(--radius);font-weight:700;font-size:14px;}
+.btn.ghost{background:transparent;border:1px solid #3a3424;color:var(--text-muted);}
+.btn.danger{background:var(--blood-bright);color:var(--paper);}
+.feedback{margin-top:10px;font-size:13px;font-family:var(--font-mono);}
+.feedback.ok{color:#8fce8f;}
+.feedback.bad{color:var(--blood-bright);}
+
+/* ACCUSATION */
+.accuse-grid{display:grid;grid-template-columns:1fr;gap:18px;max-width:520px;margin:0 auto;}
+.accuse-field label{display:block;font-family:var(--font-mono);font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-faint);margin-bottom:6px;}
+.accuse-field select{width:100%;background:var(--ink-3);color:var(--paper);border:1px solid #3a3424;padding:12px;border-radius:var(--radius);font-size:15px;}
+.accuse-warning{text-align:center;color:var(--blood-bright);font-family:var(--font-mono);font-size:13px;margin-top:6px;}
+
+/* RESULT */
+.result-hero{text-align:center;padding:30px 10px;}
+.result-hero .verdict{font-family:var(--font-display);font-size:38px;margin:0 0 8px;}
+.verdict.win{color:#8fce8f;}
+.verdict.lose{color:var(--blood-bright);}
+.result-body{max-width:600px;margin:0 auto;color:var(--paper-dim);}
+.score-row{display:flex;justify-content:center;gap:30px;margin:20px 0;flex-wrap:wrap;font-family:var(--font-mono);text-align:center;}
+.score-row b{display:block;color:var(--brass-bright);font-size:24px;font-family:var(--font-display);}
+.achv-row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:14px;}
+.achv{background:var(--ink-3);border:1px solid var(--brass);color:var(--brass-bright);font-size:12px;padding:6px 12px;border-radius:14px;font-family:var(--font-mono);}
+
+/* LEADERBOARD */
+table.lb{width:100%;border-collapse:collapse;font-family:var(--font-mono);font-size:13px;}
+table.lb th{text-align:left;color:var(--text-faint);text-transform:uppercase;font-size:11px;letter-spacing:.06em;padding:8px;border-bottom:1px solid #3a3424;}
+table.lb td{padding:10px 8px;border-bottom:1px solid #26221a;color:var(--paper-dim);}
+table.lb tr:hover td{background:#221d13;}
+.empty-note{color:var(--text-faint);font-style:italic;text-align:center;padding:20px;}
+
+/* toast */
+#toast{
+  position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--ink-3);border:1px solid var(--brass);color:var(--paper);
+  padding:12px 20px;border-radius:var(--radius);font-family:var(--font-mono);font-size:13px;
+  opacity:0;transition:.3s;z-index:6000;pointer-events:none;max-width:90vw;text-align:center;
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+.footer-note{text-align:center;color:var(--text-faint);font-size:11px;margin-top:30px;font-family:var(--font-mono);}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="topbar">
+    <div class="brand">
+      <div class="badge lamp-flicker">🔎</div>
+      <div>
+        <h1>DETECTIVE AI</h1>
+        <small>Case Files</small>
+      </div>
+    </div>
+    <div class="nav-tabs" id="navTabs"></div>
+    <div class="hud" id="hud"></div>
+  </div>
+  <div id="viewRoot"></div>
+  <div class="footer-note">Suspect dialogue generated live by Claude · Case data stored locally in your browser</div>
+</div>
+<div id="toast"></div>
+
+<script>
+/* =========================================================
+   HELPERS USED BY CASE DATA
+========================================================= */
+function caesar(str,shift){
+  shift=((shift%26)+26)%26;
+  return str.replace(/[A-Z]/g,c=>String.fromCharCode((c.charCodeAt(0)-65+shift)%26+65));
+}
+
+const DIFFICULTY = {
+  easy:{seconds:22*60, hints:5, label:"Easy"},
+  medium:{seconds:15*60, hints:3, label:"Medium"},
+  hard:{seconds:10*60, hints:2, label:"Hard"}
+};
+
+const CRIME_TEMPLATES = {
+  murder:{
+    win:"Your instincts were right. {culprit} murdered {victim}, driven by {motive}, using {method}. The evidence you gathered holds up.",
+    lose:"Not quite. The real killer was {culprit}, driven by {motive}, using {method}. Your case fell apart under scrutiny — the wrong person may walk free."
+  },
+  theft:{
+    win:"Case closed. {culprit} was behind the theft of {victim}, driven by {motive}, pulling it off by {method}.",
+    lose:"Wrong call. The real thief was {culprit}, driven by {motive}, who pulled it off by {method}. {victim} is gone for good."
+  },
+  kidnapping:{
+    win:"You cracked it. {culprit} was behind the disappearance of {victim}, driven by {motive}, and pulled it off by {method}.",
+    lose:"Not this time. {culprit} was really behind it, driven by {motive}, and pulled it off by {method}. Your accusation won't hold up."
+  },
+  fraud:{
+    win:"Case closed. {culprit} orchestrated it all against {victim}, driven by {motive}, by {method}.",
+    lose:"Wrong call. {culprit} orchestrated it, driven by {motive}, by {method}. {victim} never got justice."
+  }
+};
+
+/* =========================================================
+   CASE DATA — 3 cases per difficulty tier
+========================================================= */
+const CASES = [
+
+/* ============================= EASY ============================= */
+{
+  id:'easy_diamond', difficulty:'easy', crimeType:'theft', icon:'💎',
+  title:"The Vanishing Diamond",
+  tagline:"A flawless gem disappears from a locked display case.",
+  victim:"the Star of Kolkata", victimRole:"Prized diamond, Lindqvist & Sons Jewelers",
+  briefing:"During a private evening viewing at Lindqvist & Sons, the legendary 'Star of Kolkata' vanished from its sealed display case. The lock wasn't forced, the alarm never tripped, and only three people had access that night. Someone in this story is walking around with an eleven-carat secret.",
+  culpritLabel:"The Thief", methodLabel:"How It Was Done",
+  locations:[
+    { id:"showroom", name:"Showroom Floor", icon:"🏬",
+      desc:"Velvet ropes, soft spotlighting, and one very empty display case.",
+      objects:[
+        {id:"display_case", name:"Display Case", icon:"📦", clue:"case_lock", found:"The lock shows no signs of forcing — whoever opened it either had a key or knew the combination."},
+        {id:"camera", name:"Security Camera", icon:"🎥", clue:"camera_log", found:"The camera log shows a suspicious two-minute gap in footage right at closing time."}
+      ]
+    },
+    { id:"office", name:"Back Office", icon:"🗄️",
+      desc:"Paperwork, a small safe, and the smell of stale coffee. A brass plaque by the door reads 'Est. 07/14/1958.'",
+      objects:[
+        {id:"courierlog", name:"Courier Logbook", icon:"📖", clue:"courier_log", found:"Derek Voss, the delivery courier, signed in twice that evening — once for insurance paperwork, once for no listed reason."},
+        {id:"safe", name:"Small Safe", icon:"🔐", puzzle:"code", found:null}
+      ]
+    },
+    { id:"storage", name:"Storage Closet", icon:"📦",
+      desc:"Shelves of packing crates and spare display mounts.",
+      objects:[
+        {id:"wrapper", name:"Crumpled Wrapper", icon:"🗑️", clue:"replica_wrapper", found:"A wrapper for a cheap glass replica — the kind used in costume jewelry, not fine gems."},
+        {id:"ledger", name:"Inventory Ledger", icon:"📒", clue:"inventory_note", found:"A margin note in the ledger: 'D.V. asked about insurance photography timing again. Odd.'"}
+      ]
+    }
+  ],
+  clueMeta:{
+    case_lock:{name:"Undamaged Lock",icon:"📦"}, camera_log:{name:"Security Camera Log",icon:"🎥"},
+    courier_log:{name:"Courier Logbook",icon:"📖"}, replica_wrapper:{name:"Replica Wrapper",icon:"🗑️"},
+    inventory_note:{name:"Inventory Ledger Note",icon:"📒"}, safe_code_clue:{name:"Safe Contents",icon:"🔓"}
+  },
+  puzzles:{
+    code:{ code:"0714", clueId:"safe_code_clue", title:"Crack the Office Safe",
+      promptText:"The safe's a simple 4-digit dial. That brass plaque by the door might be worth trying.",
+      rewardText:"Inside: a rush insurance appraisal for a replica stone, requested by Derek Voss the same week.", triggerObjectId:"office:safe" }
+  },
+  suspects:[
+    {id:"priya", name:"Priya Nair", role:"Shop Clerk", portrait:"🧑‍💼", guilty:false,
+     persona:"Priya Nair, 29, the shop clerk who closed up that night. She's anxious about being blamed since she knows the display case combination, speaks quickly when nervous, and feels guilty for possibly leaving the case unlocked for a moment while helping a customer. She genuinely noticed Derek Voss loitering near the case, seemingly inspecting the lighting, longer than any delivery should take. She has nothing to hide and answers honestly, though her nerves make her sound evasive at first."},
+    {id:"derek", name:"Derek Voss", role:"Delivery Courier", portrait:"🚚", guilty:true,
+     persona:"Derek Voss, 34, the delivery courier and the actual thief. He has serious gambling debts and swapped the real diamond for a glass replica during a staged 'insurance photography' visit. He's charming and smooth-talking, tries to steer conversation toward Priya's access to the case, and gets noticeably flustered, terse, or defensive when asked about his second unexplained sign-in, the replica wrapper, or why he lingered near the display. He never confesses outright, but his cover story has small inconsistencies if pressed on timing."},
+    {id:"harold", name:"Harold Lindqvist Jr.", role:"Owner's Son", portrait:"🧑", guilty:false,
+     persona:"Harold Lindqvist Jr., 41, the owner's estranged son, passed over for a role in the family business. He's entitled, a little dismissive of staff, and was overheard arguing with his father about inheritance earlier that day, which makes him look suspicious even though it's unrelated. He has a solid alibi (dinner with a client across town) but is reluctant to share it plainly because it means admitting he skipped a family obligation. He warms up once reassured he's not the primary suspect."}
+  ],
+  solution:{culprit:"derek", motive:"gambling_debt", method:"replica_swap"},
+  motiveOptions:[
+    {id:"gambling_debt", label:"Crushing gambling debt"},
+    {id:"inheritance", label:"Resentment over family inheritance"},
+    {id:"revenge", label:"Personal revenge against the owner"},
+    {id:"blackmail", label:"Being blackmailed into it"}
+  ],
+  methodOptions:[
+    {id:"replica_swap", label:"Swapped the gem for a glass replica during handling"},
+    {id:"smashed_case", label:"Smashed open the display case"},
+    {id:"spare_key", label:"Used a stolen spare key after hours"},
+    {id:"distraction", label:"Grabbed it during a staged distraction"}
+  ],
+  hints:[
+    "Start in the Showroom — that's where the gem was last seen.",
+    "The courier's two sign-ins the same night are worth asking him about directly.",
+    "The office safe has a 4-digit lock. Look around the building for a meaningful date.",
+    "The replica wrapper in Storage explains exactly how the swap was pulled off.",
+    "Ask Derek Voss about the replica or the insurance photography visit — watch him get defensive."
+  ]
+},
+
+{
+  id:'easy_magic', difficulty:'easy', crimeType:'theft', icon:'🎩',
+  title:"Vanishing Act",
+  tagline:"A magician's most guarded secret disappears before curtain.",
+  victim:"the Phantom Locket", victimRole:"Signature illusion prop, The Regal Theatre",
+  briefing:"Twenty minutes before curtain, master illusionist Callum Bishop discovers his signature prop — the Phantom Locket — missing from its locked trunk backstage. Without it, tonight's headline trick is dead. Someone backstage wanted the show to fail, or wanted the prop's secret for themselves.",
+  culpritLabel:"The Thief", methodLabel:"How It Was Done",
+  locations:[
+    { id:"corridor", name:"Backstage Corridor", icon:"🚪",
+      desc:"A cramped hallway lined with costume racks and crossed cables.",
+      objects:[
+        {id:"callsheet", name:"Call Sheet", icon:"📋", clue:"call_sheet", found:"The sign-in sheet shows Nadia Cross, a rival magician, badged in as a 'guest consultant' twenty minutes before the prop vanished."},
+        {id:"cablebox", name:"Cable Junction Box", icon:"🔌", clue:"blackout_note", found:"A maintenance tag notes the corridor lights were manually cut for ninety seconds during scene three — right before the theft."}
+      ]
+    },
+    { id:"proproom", name:"Prop Room", icon:"🎁",
+      desc:"Locked trunks, a workbench, and one very empty display stand. Callum's playbills line the wall — his stage debut is dated March 19th.",
+      objects:[
+        {id:"trunk", name:"Prop Trunk", icon:"🧳", puzzle:"code", found:null},
+        {id:"workbench", name:"Workbench", icon:"🛠️", clue:"tool_marks", found:"Fresh scratch marks ring the trunk's lock — someone picked it, and not for the first time."}
+      ]
+    },
+    { id:"dressing", name:"Dressing Rooms", icon:"🪞",
+      desc:"Mirrors ringed with bulbs, half of them burnt out.",
+      objects:[
+        {id:"notebook", name:"Ivy's Notebook", icon:"📓", clue:"assistant_notes", found:"Ivy's notes detail the locket's hidden compartment mechanism — written plainly, as if for someone who didn't already know it."},
+        {id:"flowers", name:"Bouquet with Card", icon:"💐", clue:"rival_card", found:"A card reads: 'Break a leg tonight — or don't. — N.C.' Sent by Nadia Cross, oddly pointed for a well-wisher."}
+      ]
+    }
+  ],
+  clueMeta:{
+    call_sheet:{name:"Backstage Call Sheet",icon:"📋"}, blackout_note:{name:"Blackout Maintenance Tag",icon:"🔌"},
+    tool_marks:{name:"Fresh Tool Marks",icon:"🛠️"}, assistant_notes:{name:"Ivy's Notebook",icon:"📓"},
+    rival_card:{name:"Rival's Card",icon:"💐"}, trunk_contents:{name:"Trunk's False Bottom",icon:"🔓"}
+  },
+  puzzles:{
+    code:{ code:"0319", clueId:"trunk_contents", title:"Pick the Trunk's Combination",
+      promptText:"Callum always uses meaningful dates for his locks. His stage debut, framed on the wall, might be the key.",
+      rewardText:"Inside a false bottom: a spare Phantom Locket casing, partially disassembled — someone was studying it, not fencing it.", triggerObjectId:"proproom:trunk" }
+  },
+  suspects:[
+    {id:"nadia", name:"Nadia Cross", role:"Rival Magician", portrait:"🎭", guilty:true,
+     persona:"Nadia Cross, 38, a rival illusionist and the actual thief. Smooth, competitive, and openly condescending about Callum's 'amateur' tricks, she badged in as a guest consultant to steal the Phantom Locket and reverse-engineer its mechanism for her own act. She denies any wrongdoing and stays charming on generic questions, but turns clipped and defensive when the call sheet timing, the blackout window, or the trunk's tool marks come up. She never confesses outright, and tries to redirect suspicion toward backstage crew being careless with access."},
+    {id:"benny", name:"Benny Ortiz", role:"Stagehand", portrait:"🧢", guilty:false,
+     persona:"Benny Ortiz, 24, a stagehand terrified of losing his job over the lighting blackout, which was technically his section to monitor. He's honest once reassured he's not in trouble, and admits he saw someone in a dark coat lurking near the prop room during the blackout but was too anxious to report it immediately. He answers plainly and wants to help once he calms down."},
+    {id:"ivy", name:"Ivy Sørensen", role:"Magician's Assistant", portrait:"🎀", guilty:false,
+     persona:"Ivy Sørensen, 27, Callum's devoted stage assistant who knows the Phantom Locket's secrets better than anyone alive. She's fiercely protective of the act's secrecy and initially guarded with the detective, worried about further exposure of the mechanism. She warms up once she understands the detective is trying to help Callum, and has no motive to steal a prop she already has full access to."}
+  ],
+  solution:{culprit:"nadia", motive:"sabotage", method:"blackout_theft"},
+  motiveOptions:[
+    {id:"sabotage", label:"Professional jealousy and sabotage"},
+    {id:"money", label:"Planning to sell the prop's secret"},
+    {id:"revenge", label:"Personal revenge against Callum"},
+    {id:"accident", label:"An accidental mix-up during the blackout"}
+  ],
+  methodOptions:[
+    {id:"blackout_theft", label:"Slipped in during the staged blackout and picked the trunk"},
+    {id:"duplicate_key", label:"Used a duplicate prop room key"},
+    {id:"bribed_stagehand", label:"Bribed a stagehand to hand it over"},
+    {id:"costume_swap", label:"Took it during a costume fitting"}
+  ],
+  hints:[
+    "The Backstage Corridor's call sheet tells you exactly who shouldn't have been there.",
+    "The blackout timing lines up with something else you'll find nearby.",
+    "The prop trunk's combination lock might respond to a date meaningful to Callum.",
+    "Ivy's notebook shows the mechanism was explained to someone who didn't already know it.",
+    "Ask Nadia Cross about the blackout window directly — watch her tone shift."
+  ]
+},
+
+{
+  id:'easy_library', difficulty:'easy', crimeType:'theft', icon:'📚',
+  title:"The Library Heist",
+  tagline:"A priceless first edition disappears overnight.",
+  victim:"a first edition of 'Meridian Tides'", victimRole:"Rare manuscript, Ashcombe University Library",
+  briefing:"Ashcombe University's only annotated first edition of 'Meridian Tides' — insured for a small fortune — is gone from the Rare Books Room by morning. The alarm never sounded. Only three people had after-hours access: the curator, a graduate student, and the night janitor.",
+  culpritLabel:"The Thief", methodLabel:"How It Was Done",
+  locations:[
+    { id:"rarebooks", name:"Rare Books Room", icon:"📜",
+      desc:"Climate-controlled shelving, and one glaringly empty archival box. A cornerstone plaque reads 'Founded 1922.'",
+      objects:[
+        {id:"archivebox", name:"Archival Box", icon:"📦", clue:"empty_box", found:"The box was closed and neatly re-shelved — whoever took the book wanted time before anyone noticed."},
+        {id:"alarmpanel", name:"Alarm Panel", icon:"🚨", puzzle:"code", found:null}
+      ]
+    },
+    { id:"readinghall", name:"Reading Hall", icon:"🕯️",
+      desc:"Long oak tables, and the smell of old paper.",
+      objects:[
+        {id:"signin", name:"Sign-In Sheet", icon:"📝", clue:"signin_sheet", found:"Maya Okafor signed in at 11:40 PM — an hour after the library officially closed to students."},
+        {id:"emails", name:"Printed Emails", icon:"✉️", clue:"buyer_emails", found:"A printed email thread between an anonymous account and a private collector, negotiating a price for a 'rare regional first edition.'"}
+      ]
+    },
+    { id:"staffoffice", name:"Staff Office", icon:"🗃️",
+      desc:"Filing cabinets and a corkboard thick with overdue notices.",
+      objects:[
+        {id:"noteboard", name:"Corkboard Note", icon:"📌", puzzle:"cipher", found:null},
+        {id:"keyring", name:"Spare Keyring", icon:"🔑", clue:"key_log", found:"The spare key log shows Colin Reyes checked out the Rare Books key at 11:15 PM 'for cleaning' — standard for his rounds, but the timing is close."}
+      ]
+    }
+  ],
+  clueMeta:{
+    empty_box:{name:"Empty Archival Box",icon:"📦"}, signin_sheet:{name:"Reading Hall Sign-In",icon:"📝"},
+    buyer_emails:{name:"Buyer Email Thread",icon:"✉️"}, key_log:{name:"Spare Key Log",icon:"🔑"},
+    alarm_log:{name:"Disabled Alarm Log",icon:"🔓"}, decoded_meeting_note:{name:"Decoded Meeting Note",icon:"🔓"}
+  },
+  puzzles:{
+    cipher:{ plain:"MEET AT THE OLD PIER AFTER MIDNIGHT", shift:5, clueId:"decoded_meeting_note",
+      title:"Decode the Corkboard Note", promptText:"A note pinned to the corkboard is shifted using a simple letter cipher.",
+      rewardText:"Decoded: a meeting arranged at the old pier, timed suspiciously close to the theft.", triggerObjectId:"staffoffice:noteboard" },
+    code:{ code:"1922", clueId:"alarm_log", title:"Check the Alarm Panel Override",
+      promptText:"The alarm panel wants a 4-digit override. That cornerstone plaque gives the library's founding year.",
+      rewardText:"The disabled alarm log shows it was switched off using Maya Okafor's own staff badge code.", triggerObjectId:"rarebooks:alarmpanel" }
+  },
+  suspects:[
+    {id:"elias", name:"Professor Elias Whitmore", role:"Rare Books Curator", portrait:"🧓", guilty:false,
+     persona:"Professor Elias Whitmore, 63, the protective and prickly curator of the Rare Books collection. He was in the room late that night cataloguing, which makes him look suspicious, and is cagey about a private collector who has been emailing him about buying pieces off the record — offers he insists he always refused. He's defensive about the collection's reputation but ultimately forthcoming once he trusts the detective isn't trying to trap him."},
+    {id:"maya", name:"Maya Okafor", role:"Graduate Student", portrait:"🎓", guilty:true,
+     persona:"Maya Okafor, 25, a stressed graduate student drowning in tuition debt, and the actual thief. She stole the first edition to sell to a private collector through an anonymous email account. She's polite and helpful on the surface, offering to assist however she can, but gets visibly rattled when the sign-in sheet, the buyer emails, or her own badge code on the alarm log come up. She never confesses outright and tries to gently redirect suspicion toward Colin's key access."},
+    {id:"colin", name:"Colin Reyes", role:"Night Janitor", portrait:"🧹", guilty:false,
+     persona:"Colin Reyes, 51, the plainspoken night janitor, a little defensive about being an easy target since he holds keys to everything in the building. He genuinely noticed the alarm panel behaving strangely that night and mentioned it to his supervisor the next morning, which is easy to verify. He has nothing to hide once he stops feeling accused and answers straightforwardly."}
+  ],
+  solution:{culprit:"maya", motive:"debt", method:"badge_alarm_disable"},
+  motiveOptions:[
+    {id:"debt", label:"Desperate financial debt"},
+    {id:"rivalry", label:"Academic rivalry with another student"},
+    {id:"revenge", label:"Revenge against the university"},
+    {id:"obsession", label:"Personal obsession with the book itself"}
+  ],
+  methodOptions:[
+    {id:"badge_alarm_disable", label:"Disabled the alarm with her own badge and slipped out with it"},
+    {id:"duplicate_key", label:"Used a duplicate master key"},
+    {id:"hid_in_stacks", label:"Hid it in the stacks and returned for it later"},
+    {id:"colleague_checkout", label:"Convinced a colleague to check it out for her"}
+  ],
+  hints:[
+    "The Rare Books Room's alarm panel needs a 4-digit override — look for a meaningful year nearby.",
+    "The Reading Hall sign-in sheet places someone in the building well after closing.",
+    "The buyer emails describe someone shopping the book to a private collector.",
+    "The corkboard note in the Staff Office is encoded — try shifting the alphabet.",
+    "Ask Maya Okafor about her badge code directly once you've cracked the alarm panel."
+  ]
+},
+
+/* ============================= MEDIUM ============================= */
+{
+  id:'amber_hour', difficulty:'medium', crimeType:'murder', icon:'🖼️',
+  title:"The Amber Hour",
+  tagline:"A gallery owner's silence was bought with blood.",
+  victim:"Edmund Voss", victimRole:"Owner, Voss Fine Art Gallery",
+  briefing:"Edmund Voss was found dead in his gallery office late last night, struck once with a heavy object. The front door was locked from the inside. No forced entry. Whoever did this either had a key — or Edmund let them in himself. You have four suspects, a locked office full of secrets, and not nearly enough time.",
+  culpritLabel:"The Murderer", methodLabel:"Murder Weapon",
+  locations:[
+    { id:"office", name:"Back Office", icon:"🗄️",
+      desc:"Where Edmund was found. A cracked window. Papers scattered. The smell of old cigars and fresh copper.",
+      objects:[
+        {id:"desk", name:"Desk Drawer", icon:"🗂️", clue:"financial_ledger", found:"A ledger tucked under false paperwork — funds quietly rerouted through 'Webb Holdings' over eighteen months."},
+        {id:"letteropener", name:"Letter Opener", icon:"🔪", clue:"fingerprints", found:"A bronze letter opener, its edge dark and dried. Smudged fingerprints on the handle — partial, but usable."},
+        {id:"note", name:"Torn Note", icon:"📄", puzzle:"cipher", found:null},
+        {id:"watch", name:"Broken Wristwatch", icon:"⌚", clue:"broken_watch", found:"Edmund's wristwatch, glass cracked, hands frozen at 10:12 PM."}
+      ]
+    },
+    { id:"gallery", name:"Main Gallery", icon:"🖼️",
+      desc:"Rows of paintings under dim emergency lighting. Everything looks exactly where it should be.",
+      objects:[
+        {id:"logbook", name:"Sign-In Log", icon:"📖", clue:"security_log", found:"The visitor log shows Marcus Webb signed in at 9:47 PM — nearly an hour after the gallery closed."},
+        {id:"voicemail", name:"Front Desk Phone", icon:"☎️", clue:"threatening_voicemail", found:"A saved voicemail transcript pinned by the receptionist: a warning that Edmund would 'regret exposing' whoever left it. No caller name logged."},
+        {id:"frame", name:"Empty Frame Hook", icon:"🖼️", found:"An empty hook where a painting should hang. Odd — nothing was reported stolen."}
+      ]
+    },
+    { id:"storage", name:"Storage Room", icon:"📦",
+      desc:"Crates, spare frames, and a false wall panel slightly ajar.",
+      objects:[
+        {id:"panel", name:"False Wall Panel", icon:"🧱", clue:"forged_painting", found:"Behind the panel: a near-perfect forgery of 'The Amber Hour', Edmund's most valuable piece. Someone was planning to swap it."},
+        {id:"safe", name:"Small Safe", icon:"🔐", clue:"phone_hint_1", found:"Taped inside an empty safe: a scrap of paper reading '14__'. Half a code, maybe."},
+        {id:"crate", name:"Shipping Crate", icon:"📦", found:"Packing slips for gallery inventory. One line item is circled in red pen for no clear reason."}
+      ]
+    },
+    { id:"alley", name:"Back Alley", icon:"🌃",
+      desc:"A narrow service alley behind the gallery, lit by a single flickering streetlamp.",
+      objects:[
+        {id:"receipt", name:"Crumpled Receipt", icon:"🧾", clue:"alibi_photo", found:"A restaurant receipt timestamped 9:15–10:30 PM under the name 'L. Ashford' — dinner for one, three blocks away."},
+        {id:"scrap", name:"Torn Paper Scrap", icon:"📃", clue:"phone_hint_2", found:"Stuck to a drainpipe: another scrap reading '__27'. Combined with the other half, that might be a code."},
+        {id:"guardbooth", name:"Guard's Booth", icon:"💺", clue:"guard_statement", found:"A handwritten shift note: raised voices from the office around 9:45, dismissed at the time as nothing."}
+      ]
+    }
+  ],
+  clueMeta:{
+    fingerprints:{name:"Smudged Fingerprints", icon:"🖐️"}, decoded_note:{name:"Decoded Note", icon:"🔓"},
+    forged_painting:{name:"Forged Painting", icon:"🖼️"}, financial_ledger:{name:"Financial Ledger", icon:"📒"},
+    threatening_voicemail:{name:"Voicemail Transcript", icon:"☎️"}, security_log:{name:"Sign-In Log", icon:"📖"},
+    broken_watch:{name:"Broken Wristwatch", icon:"⌚"}, phone_hint_1:{name:"Code Scrap (14__)", icon:"📎"},
+    phone_hint_2:{name:"Code Scrap (__27)", icon:"📎"}, phone_unlocked:{name:"Victim's Phone (unlocked)", icon:"📱"},
+    alibi_photo:{name:"Restaurant Receipt", icon:"🧾"}, guard_statement:{name:"Guard's Shift Note", icon:"💺"}
+  },
+  puzzles:{
+    cipher:{ plain:"WATCH MARCUS HE KNOWS ABOUT THE LEDGER", shift:7, clueId:"decoded_note",
+      title:"Decode the Note", promptText:"The note is shifted using a simple letter cipher. Slide until it reads clearly.",
+      rewardText:"Decoded! The note now reads clearly.", triggerObjectId:"office:note" },
+    code:{ code:"1427", clueId:"phone_unlocked", requiresClues:["phone_hint_1","phone_hint_2"],
+      title:"Unlock Edmund's Phone", promptText:"You found two torn code scraps. Combine them into a 4-digit code.",
+      rewardText:"Unlocked. Texts confirm Marcus threatened Edmund directly." }
+  },
+  suspects:[
+    {id:"sarah", name:"Sarah Chen", role:"Gallery Assistant", portrait:"🧣", guilty:false,
+     persona:"Sarah Chen, 26, Edmund Voss's devoted gallery assistant. She is anxious, speaks quickly, over-explains, and fidgets verbally when nervous. She genuinely admired Edmund and is grieving. She noticed the forged painting weeks ago and suspects Marcus Webb but is too scared of losing her job and of Marcus's temper to accuse him outright unless pressed hard with real evidence. She was at home alone that night (no alibi witness, which embarrasses her). She knows nothing about the letter opener or the note cipher. If shown the forged painting or ledger evidence, she becomes visibly more forthcoming about Marcus. She never lies about facts she knows, but withholds her suspicion of Marcus until pushed."},
+    {id:"marcus", name:"Marcus Webb", role:"Business Partner", portrait:"🎩", guilty:true,
+     persona:"Marcus Webb, 51, Edmund Voss's business partner and the murderer, though he must never admit this outright. He is smooth, condescending, name-drops his wealth, and deflects with charm or irritation. He embezzled gallery funds and commissioned a forgery of 'The Amber Hour' to sell secretly; Edmund discovered this and confronted him that night, so Marcus killed him with the letter opener in the office. He will deny entering the gallery late unless confronted with the sign-in log, at which point he claims he 'stopped by briefly to drop off paperwork and left.' He gets defensive and terse when shown the ledger, the forged painting, or the voicemail transcript, and his answers get shorter and more evasive the more evidence is presented, though he never confesses outright — he might slip up with a contradiction if pressed hard on timeline details. He never volunteers information that incriminates himself."},
+    {id:"lydia", name:"Lydia Ashford", role:"Ex-Wife", portrait:"💄", guilty:false,
+     persona:"Lydia Ashford, 47, Edmund's ex-wife, divorced two years ago on bitter terms over the gallery's finances. She is dramatic, emotional, quick to bring up old grievances about Edmund, and initially cagey about her whereabouts because she's embarrassed about eating dinner alone. She has a solid alibi (a restaurant receipt timestamped that night, three blocks from the gallery) which clears her, but she'll only mention the restaurant plainly if asked directly about her alibi or shown the receipt; otherwise she rambles about the divorce. She has no real knowledge of the murder but resents Marcus and will happily gossip that he 'always seemed like he was hiding something with the gallery's books.'"},
+    {id:"tomas", name:"Tomás Rivera", role:"Security Guard", portrait:"🧢", guilty:false,
+     persona:"Tomás Rivera, 34, night security guard, embarrassed because he dozed off part of that shift and doesn't want to admit it unless pressed. He's straightforward, a little gruff, working-class, protective of his job. He heard raised voices from the office around 9:45 PM but assumed it was nothing and didn't check. He remembers seeing Marcus Webb's car in the back lot later than usual. He'll admit to dozing off only if asked pointedly about the timeline or shown the guard shift note. He is honest once he stops being defensive, and never lies about what he saw, only initially omits the embarrassing parts."}
+  ],
+  solution:{culprit:"marcus", motive:"fraud", method:"letter_opener"},
+  motiveOptions:[
+    {id:"fraud", label:"Financial fraud — to stop Edmund exposing embezzlement"},
+    {id:"jealousy", label:"Jealousy over the failed marriage"},
+    {id:"blackmail", label:"Blackmail gone wrong over the forged painting"},
+    {id:"revenge", label:"Personal revenge, unrelated to money"}
+  ],
+  methodOptions:[
+    {id:"letter_opener", label:"Bronze letter opener"},
+    {id:"sculpture", label:"Heavy bronze sculpture"},
+    {id:"bottle", label:"Broken wine bottle"},
+    {id:"poker", label:"Fireplace poker"}
+  ],
+  hints:[
+    "Start in the Office — that's where Edmund was found.",
+    "The forged painting in Storage explains why someone needed Edmund silenced.",
+    "The torn note found in the Office is encoded. Try shifting the alphabet.",
+    "Ask suspects directly about the forged painting — watch how they react.",
+    "Combine both phone code scraps from Storage and the Alley to unlock Edmund's phone."
+  ]
+},
+
+{
+  id:'medium_radio', difficulty:'medium', crimeType:'kidnapping', icon:'📻',
+  title:"Static on the Line",
+  tagline:"A producer vanishes mid-broadcast, and a ransom note follows.",
+  victim:"Nina Alvarez", victimRole:"Producer, WKZR Late Night Radio",
+  briefing:"Nina Alvarez, producer of WKZR's top-rated late night show, vanished during a commercial break. Ten minutes later, a ransom note appeared on the studio fax machine. The doors were locked from inside. Whoever did this either works at the station — or wants everyone to think they do.",
+  culpritLabel:"The Kidnapper", methodLabel:"How It Was Done",
+  locations:[
+    { id:"studio", name:"Broadcast Studio", icon:"🎙️",
+      desc:"Soundproofed walls, a live mic still hot, and a chair pushed back too fast.",
+      objects:[
+        {id:"faxnote", name:"Fax Machine", icon:"📠", clue:"ransom_note", found:"The ransom note demands $50,000 by midnight — but it's typed on the station's own letterhead paper."},
+        {id:"mixerlog", name:"Mixing Board Log", icon:"🎚️", clue:"timestamp_log", found:"The board's auto-log shows the studio door was buzzed open from the inside at 11:04 PM — right when Nina disappeared."},
+        {id:"baglost", name:"Nina's Bag", icon:"👜", clue:"nina_bag", found:"Nina's bag, phone, and keys were left behind — untouched, as if she left in a hurry, or didn't leave willingly."}
+      ]
+    },
+    { id:"basement", name:"Basement Storage", icon:"🕯️",
+      desc:"Old equipment crates and a single bare bulb.",
+      objects:[
+        {id:"duffel", name:"Duffel Bag", icon:"🎒", clue:"duffel_bag", found:"A duffel bag stuffed with a sleeping bag and bottled water, hidden behind old transmitter crates — prepared, not improvised."},
+        {id:"lock", name:"Storage Padlock", icon:"🔒", puzzle:"code", found:null},
+        {id:"scuffmarks", name:"Scuff Marks", icon:"👣", clue:"scuff_marks", found:"Fresh scuff marks drag from the stairwell to the far corner of the basement — someone was moved through here recently."}
+      ]
+    },
+    { id:"manageroffice", name:"Manager's Office", icon:"🗄️",
+      desc:"Ratings charts on every wall, and a budget spreadsheet open on the monitor.",
+      objects:[
+        {id:"budget", name:"Budget Spreadsheet", icon:"📊", clue:"budget_sheet", found:"The show's ratings have cratered three months running. Cancellation was reportedly 'on the table' as of last week."},
+        {id:"phonebill", name:"Phone Records", icon:"📱", puzzle:"cipher", found:null},
+        {id:"insurance", name:"Insurance Policy", icon:"📄", clue:"insurance_doc", found:"A 'talent disruption' insurance policy naming the show's co-host as a beneficiary if production is interrupted by a covered incident — including abduction."}
+      ]
+    }
+  ],
+  clueMeta:{
+    ransom_note:{name:"Ransom Note",icon:"📠"}, timestamp_log:{name:"Mixing Board Timestamp",icon:"🎚️"},
+    nina_bag:{name:"Nina's Abandoned Bag",icon:"👜"}, duffel_bag:{name:"Prepped Duffel Bag",icon:"🎒"},
+    scuff_marks:{name:"Basement Scuff Marks",icon:"👣"}, budget_sheet:{name:"Budget Spreadsheet",icon:"📊"},
+    insurance_doc:{name:"Insurance Policy",icon:"📄"}, basement_contents:{name:"Padlocked Contents",icon:"🔓"},
+    decoded_texts:{name:"Decoded Text Messages",icon:"🔓"}
+  },
+  puzzles:{
+    code:{ code:"1104", clueId:"basement_contents", title:"Open the Storage Padlock",
+      promptText:"The padlock's a simple 4-digit combo. That mixing board timestamp keeps nagging at you.",
+      rewardText:"Inside: Nina's spare house keys and a granola wrapper — someone planned for her to be here a while.", triggerObjectId:"basement:lock" },
+    cipher:{ plain:"MEET ME AFTER THE SHOW WE NEED TO TALK ABOUT THE NUMBERS", shift:4, clueId:"decoded_texts",
+      title:"Decode the Phone Records", promptText:"A printed text thread is garbled by a simple letter shift.",
+      rewardText:"Decoded: a text from Danny to Nina the day before, insisting they 'talk about the numbers.'", triggerObjectId:"manageroffice:phonebill" }
+  },
+  suspects:[
+    {id:"danny", name:"Danny Reeves", role:"Co-Host", portrait:"🎧", guilty:true,
+     persona:"Danny Reeves, 39, the show's fast-talking co-host and the actual kidnapper. Charismatic on-air but brittle off-air, he's privately panicking about the show's looming cancellation and his mounting debts. He staged Nina's disappearance to collect on a 'talent disruption' insurance policy and generate a ratings-boosting mystery, intending to have her 'found' safely within a day or two. He denies everything, stays charming on generic questions, but turns short and irritable when the insurance policy, the duffel bag, or the door timestamp come up. He never confesses outright but may contradict his own account of that evening if pressed hard on the timeline."},
+    {id:"carla", name:"Carla Jimenez", role:"Station Manager", portrait:"👩‍💼", guilty:false,
+     persona:"Carla Jimenez, 45, the station manager, stressed about budget cuts and pressure from corporate. She's defensive about the station's finances and genuinely worried about Nina. She has a solid alibi (on a call with corporate at the time) but is cagey about the cancellation talk because she doesn't want it read as a motive against her. She becomes more open once she realizes withholding it makes her look worse."},
+    {id:"mateo", name:"Mateo Ruiz", role:"Sound Engineer", portrait:"🎛️", guilty:false,
+     persona:"Mateo Ruiz, 31, quiet and technically precise. He noticed Danny carrying a duffel bag into the building earlier that evening but didn't think much of it at the time. He's uncomfortable being the center of attention and answers questions plainly and honestly once he's confident he isn't a suspect himself."}
+  ],
+  solution:{culprit:"danny", motive:"insurance_ratings", method:"staged_basement"},
+  motiveOptions:[
+    {id:"insurance_ratings", label:"Insurance payout and a ratings stunt to save the show"},
+    {id:"jealousy", label:"Jealousy over Nina's promotion"},
+    {id:"silence_scandal", label:"Silencing her about a scandal"},
+    {id:"personal_obsession", label:"A personal obsession with Nina"}
+  ],
+  methodOptions:[
+    {id:"staged_basement", label:"Hid her in the station's basement and staged a ransom note"},
+    {id:"outside_hire", label:"Paid an outside kidnapper to grab her"},
+    {id:"fake_note_no_abduction", label:"Faked the note; she left the building on her own"},
+    {id:"genuine_outsider", label:"An outsider abducted her with no inside help"}
+  ],
+  hints:[
+    "The mixing board log pins down the exact moment the door was buzzed open.",
+    "The basement padlock is a 4-digit code — that timestamp might be the key.",
+    "The insurance policy in the Manager's Office names a very specific beneficiary.",
+    "The phone records are encoded. Try shifting the alphabet to decode them.",
+    "Ask Danny Reeves about the duffel bag directly — watch how fast he changes the subject."
+  ]
+},
+
+{
+  id:'medium_auction', difficulty:'medium', crimeType:'fraud', icon:'🔨',
+  title:"Bidding War",
+  tagline:"A rigged auction, a beaten patron, and a room full of alibis.",
+  victim:"Charlotte Reyes", victimRole:"Auction Patron, Whitfield Auction House",
+  briefing:"At the Whitfield Auction House's biggest night of the year, patron Charlotte Reyes was found unconscious near the coat check, a bidding paddle snapped beside her. She'd spent the evening loudly insisting the night's top lot was being rigged. Now she can't tell anyone who silenced her.",
+  culpritLabel:"The Attacker", methodLabel:"Weapon Used",
+  locations:[
+    { id:"auctionfloor", name:"Auction Floor", icon:"🏛️",
+      desc:"Rows of gilt chairs, a podium, and a very large empty easel.",
+      objects:[
+        {id:"biddersheet", name:"Bidder Registration Sheet", icon:"📋", clue:"bidder_sheet", found:"Two 'competing' bidders on the top lot share the same billing address — a shell company registered to Whitfield's own director."},
+        {id:"podiumnotes", name:"Auctioneer's Notes", icon:"📝", clue:"auctioneer_notes", found:"Handwritten margin notes: push the bidding to $2.4M regardless, someone else 'covers the gap.'"}
+      ]
+    },
+    { id:"coatcheck", name:"Coat Check", icon:"🧥",
+      desc:"Rows of numbered hooks, and a dark stain on the carpet.",
+      objects:[
+        {id:"paddle", name:"Snapped Paddle", icon:"🏓", clue:"broken_paddle", found:"The paddle snapped clean in half — someone struck her with considerable force."},
+        {id:"purse", name:"Charlotte's Purse", icon:"👜", puzzle:"code", found:null}
+      ]
+    },
+    { id:"backoffice", name:"Director's Office", icon:"🖋️",
+      desc:"Framed sale records on every wall, and a locked filing cabinet.",
+      objects:[
+        {id:"ledger", name:"Sales Ledger", icon:"📒", clue:"sales_ledger", found:"Three of the last five 'record sales' were bought by shell companies tied back to the same registered address."},
+        {id:"voicemail", name:"Voicemail Transcript", icon:"☎️", puzzle:"cipher", found:null}
+      ]
+    }
+  ],
+  clueMeta:{
+    bidder_sheet:{name:"Bidder Registration Sheet",icon:"📋"}, auctioneer_notes:{name:"Auctioneer's Notes",icon:"📝"},
+    broken_paddle:{name:"Snapped Bidding Paddle",icon:"🏓"}, sales_ledger:{name:"Sales Ledger",icon:"📒"},
+    purse_contents:{name:"Purse Contents",icon:"🔓"}, decoded_voicemail:{name:"Decoded Voicemail",icon:"🔓"}
+  },
+  puzzles:{
+    code:{ code:"2400", clueId:"purse_contents", title:"Unlock Charlotte's Purse",
+      promptText:"Charlotte's diary falls open to a page where she circled one number over and over: $2.4 million.",
+      rewardText:"Inside: Charlotte's notebook, listing shell-company lots for two years, underlined 'CONFRONT WHITFIELD TONIGHT.'", triggerObjectId:"coatcheck:purse" },
+    cipher:{ plain:"SHE KNOWS ABOUT THE SHELL BIDS SHUT HER UP", shift:9, clueId:"decoded_voicemail",
+      title:"Decode the Voicemail Transcript", promptText:"A transcribed voicemail is garbled by a simple letter shift.",
+      rewardText:"Decoded: someone urgently warning that Charlotte 'knows about the shell bids' and needs to be shut up.", triggerObjectId:"backoffice:voicemail" }
+  },
+  suspects:[
+    {id:"whitfield", name:"Julian Whitfield", role:"Auction House Director", portrait:"🎩", guilty:true,
+     persona:"Julian Whitfield, 54, the polished, well-connected director of the auction house and the actual attacker. He's been rigging bids for two years through shell companies to inflate commissions and his own reputation. When Charlotte cornered him after the sale about the scheme, he struck her with the bidding paddle in a panic. He denies everything smoothly and stays charming on generic questions, but grows clipped and irritated when the sales ledger, bidder sheet, or voicemail transcript come up. He never confesses outright."},
+    {id:"priya2", name:"Priya Sandhu", role:"Rival Bidder", portrait:"💍", guilty:false,
+     persona:"Priya Sandhu, 44, a sharp-tongued socialite publicly humiliated by losing bid after bid that night. She resents Whitfield's obvious favoritism but has an alibi (on camera at the bar the entire time). She's happy to gossip loudly about how 'obviously rigged' the bidding felt, more out of spite than real insight."},
+    {id:"marcusg", name:"Marcus Grant", role:"Head of Security", portrait:"🛡️", guilty:false,
+     persona:"Marcus Grant, 47, gruff and methodical head of security. He was doing rounds near the coat check and noticed Whitfield leaving the director's office in a hurry right around the estimated time of the attack. He's initially reluctant to implicate his employer but answers honestly and directly once pressed."}
+  ],
+  solution:{culprit:"whitfield", motive:"protect_scheme", method:"paddle"},
+  motiveOptions:[
+    {id:"protect_scheme", label:"Protecting a bid-rigging scheme from exposure"},
+    {id:"jealousy", label:"Jealousy over a past relationship"},
+    {id:"money_owed", label:"A personal debt owed to Charlotte"},
+    {id:"accident", label:"A confrontation that went too far by accident"}
+  ],
+  methodOptions:[
+    {id:"paddle", label:"Struck her with a bidding paddle"},
+    {id:"shove", label:"Shoved her into a display case"},
+    {id:"statuette", label:"Hit her with a small statuette"},
+    {id:"unknown_object", label:"Used an unidentified blunt object"}
+  ],
+  hints:[
+    "The bidder registration sheet shows two 'rivals' who share the same address.",
+    "Charlotte's purse has a 4-digit lock — the auctioneer's notes mention a very specific number.",
+    "The sales ledger ties several 'record sales' back to the same shell company.",
+    "The voicemail transcript in the Director's Office is encoded — try shifting the alphabet.",
+    "Ask Julian Whitfield about the shell companies directly — watch his tone change."
+  ]
+},
+
+/* ============================= HARD ============================= */
+{
+  id:'hard_theatre', difficulty:'hard', crimeType:'murder', icon:'🎭',
+  title:"Curtain Call",
+  tagline:"Opening night, and the understudy never takes her bow.",
+  victim:"Rosalind Kane", victimRole:"Understudy, 'The Gilded Cage' (Broadway)",
+  briefing:"Rosalind Kane, the understudy who'd finally been given her shot at the lead, collapsed onstage during the final act of opening night and never got back up. The autopsy points to poisoning — something slipped into her water bottle backstage sometime in the last two hours before curtain. Everyone with access had a reason to want her gone, and every alibi is a performance.",
+  culpritLabel:"The Murderer", methodLabel:"Method of Poisoning",
+  locations:[
+    { id:"greenroom", name:"Green Room", icon:"🛋️",
+      desc:"Mirrors, flowers, and a half-drunk water bottle now sealed in evidence.",
+      objects:[
+        {id:"waterbottle", name:"Water Bottle", icon:"💧", clue:"residue", found:"Trace residue in the bottle doesn't match anything in the building's first-aid kit — this was brought in deliberately."},
+        {id:"flowersnote", name:"Flower Card", icon:"💐", clue:"flower_card", found:"A card reads: 'You'll be brilliant tonight. — V.' No last name."}
+      ]
+    },
+    { id:"wings", name:"Stage Wings", icon:"🎬",
+      desc:"Ropes, sandbags, and a clear line of sight to the green room door.",
+      objects:[
+        {id:"propslog", name:"Props Log", icon:"📋", clue:"props_log", found:"The props log shows the water bottle was restocked at 7:10 PM by someone signing only initials: 'V.H.'"},
+        {id:"callboard", name:"Call Board", icon:"📌", clue:"call_board", found:"The call board shows lead actress Vivienne Hart was 'unaccounted for' during a 15-minute window before curtain — unusual for someone always exactly on schedule."}
+      ]
+    },
+    { id:"dressingroom", name:"Vivienne's Dressing Room", icon:"🪞",
+      desc:"A star's dressing room, several rungs nicer than everyone else's. A faded playbill on the wall is dated August 7th — her very first opening night.",
+      objects:[
+        {id:"pillbottle", name:"Pill Bottle", icon:"💊", clue:"pill_bottle", found:"A prescription sedative, half empty, tucked behind a jewelry box — the same compound found in the water bottle residue."},
+        {id:"lettersafe", name:"Locked Letter Box", icon:"📮", puzzle:"code", found:null}
+      ]
+    },
+    { id:"directorsoffice", name:"Director's Office", icon:"🎬",
+      desc:"Reviews pinned to a corkboard, most of them raves for Vivienne.",
+      objects:[
+        {id:"castingnote", name:"Casting Memo", icon:"📝", puzzle:"cipher", found:null},
+        {id:"contract", name:"Contract Draft", icon:"📄", clue:"contract_draft", found:"A draft contract naming Rosalind as the new permanent lead, dated three days before her death, never finalized."}
+      ]
+    }
+  ],
+  clueMeta:{
+    residue:{name:"Water Bottle Residue",icon:"💧"}, flower_card:{name:"Flower Card",icon:"💐"},
+    props_log:{name:"Props Restocking Log",icon:"📋"}, call_board:{name:"Call Board Notes",icon:"📌"},
+    pill_bottle:{name:"Sedative Pill Bottle",icon:"💊"}, contract_draft:{name:"Contract Draft",icon:"📄"},
+    letterbox_contents:{name:"Vivienne's Unsent Letters",icon:"🔓"}, decoded_memo:{name:"Decoded Casting Memo",icon:"🔓"}
+  },
+  puzzles:{
+    code:{ code:"0807", clueId:"letterbox_contents", title:"Open the Locked Letter Box",
+      promptText:"A faded playbill nearby is dated August 7th — her very first opening night.",
+      rewardText:"Inside: unsent letters from Vivienne, increasingly desperate about being 'replaced by someone half as good.'", triggerObjectId:"dressingroom:lettersafe" },
+    cipher:{ plain:"ROSALIND TAKES OVER THE ROLE MONDAY VIVIENNE IS OUT", shift:11, clueId:"decoded_memo",
+      title:"Decode the Casting Memo", promptText:"An internal memo on the director's desk is garbled by a simple letter shift.",
+      rewardText:"Decoded: the recasting was already decided — Vivienne just hadn't been told yet.", triggerObjectId:"directorsoffice:castingnote" }
+  },
+  suspects:[
+    {id:"vivienne", name:"Vivienne Hart", role:"Lead Actress", portrait:"👑", guilty:true,
+     persona:"Vivienne Hart, 42, magnetic and imperious lead actress, terrified of being forgotten, and the actual murderer. She learned she was about to be quietly replaced by Rosalind and poisoned her water bottle with her own prescription sedatives rather than lose the role that defines her career. She's gracious and warm on public-facing questions, but turns clipped, sarcastic, or grandly wounded when the props log signature, the pill bottle, or the casting memo come up. She never confesses outright, and deflects by generalizing about 'jealous understudies' as a category rather than addressing specifics."},
+    {id:"director", name:"Victor Hale", role:"Director", portrait:"🎬", guilty:false,
+     persona:"Victor Hale, 58, exhausted and guilt-ridden about not telling Vivienne sooner about the recast decision. He's defensive about the theatre's reputation and evasive about the casting change until shown the contract draft or the memo, at which point he becomes candid, clearly shaken that his delay may have contributed to what happened."},
+    {id:"stagemgr", name:"Priya Deshmukh", role:"Stage Manager", portrait:"📋", guilty:false,
+     persona:"Priya Deshmukh, 35, hyper-organized and tightly wound, tracks everyone's movements out of habit. She noticed Vivienne near the green room during the unaccounted window but assumed she was just nervous before a big night. She's protective of keeping the production running despite the tragedy, and answers precisely and factually."},
+    {id:"rival_actor", name:"Tomás Bell", role:"Understudy's Scene Partner", portrait:"🎭", guilty:false,
+     persona:"Tomás Bell, 30, grieving and a little suspicious of everyone. He had a minor falling out with Rosalind over a scene note earlier that week, which makes him defensive and initially evasive about their relationship. He opens up once he realizes the detective isn't trying to pin the murder on him for something petty."}
+  ],
+  solution:{culprit:"vivienne", motive:"protect_role", method:"sedative_water"},
+  motiveOptions:[
+    {id:"protect_role", label:"Desperation to keep the lead role from being recast"},
+    {id:"jealousy_personal", label:"A personal grudge unrelated to casting"},
+    {id:"money", label:"A financial dispute over royalties"},
+    {id:"accident_od", label:"An accidental overdose, not intentional poisoning"}
+  ],
+  methodOptions:[
+    {id:"sedative_water", label:"Sedative slipped into her water bottle"},
+    {id:"stage_prop", label:"A rigged stage prop malfunction"},
+    {id:"food", label:"Poisoned food from catering"},
+    {id:"makeup", label:"A toxic substance in stage makeup"}
+  ],
+  hints:[
+    "The props log shows exactly who restocked the water bottle, and when.",
+    "The call board reveals a window where the lead actress can't account for her time.",
+    "The letter box in Vivienne's dressing room needs a 4-digit code — a playbill nearby might have it.",
+    "The casting memo in the Director's Office is encoded — try shifting the alphabet.",
+    "Ask Vivienne Hart about the recast decision directly, once you have the contract draft."
+  ]
+},
+
+{
+  id:'hard_manor', difficulty:'hard', crimeType:'murder', icon:'🏚️',
+  title:"The Locked Study",
+  tagline:"A patriarch is dead, the will is missing, and the door was locked from inside.",
+  victim:"Reginald Thorne", victimRole:"Family Patriarch, Thorne Manor",
+  briefing:"Reginald Thorne was found dead in his locked study an hour after gathering his family to announce changes to his will. The door was bolted from the inside, the windows painted shut decades ago, and the only other key is missing. Four people stood to lose everything from whatever he was about to say.",
+  culpritLabel:"The Murderer", methodLabel:"Murder Weapon",
+  locations:[
+    { id:"study", name:"The Study", icon:"🚪",
+      desc:"Bolted door, painted-shut windows, and a fireplace still faintly warm. A cornerstone above the fireplace reads 'Thorne Manor, Est. 1848.'",
+      objects:[
+        {id:"fireplace", name:"Fireplace", icon:"🔥", clue:"ash_fragments", found:"Charred fragments of paper in the grate — someone burned a document here recently, possibly the will itself."},
+        {id:"deskdrawer", name:"Desk Drawer", icon:"🗄️", puzzle:"code", found:null}
+      ]
+    },
+    { id:"library", name:"Manor Library", icon:"📚",
+      desc:"Floor-to-ceiling shelves and a rolling ladder nobody's used in years.",
+      objects:[
+        {id:"willcopy", name:"Draft Will", icon:"📜", clue:"draft_will", found:"An earlier draft, unsigned, cutting the eldest son Edmund out entirely in favor of a charitable trust."},
+        {id:"dustyfootprints", name:"Dusty Footprints", icon:"👣", clue:"footprints", found:"Fresh footprints in the dust lead from the library toward a disused servant passage — a route almost no one remembers exists."}
+      ]
+    },
+    { id:"diningroom", name:"Dining Room", icon:"🍽️",
+      desc:"The family gathering broke up here, tempers still hanging in the air.",
+      objects:[
+        {id:"napkinnote", name:"Napkin Note", icon:"🧻", puzzle:"cipher", found:null},
+        {id:"winebottle", name:"Wine Bottle", icon:"🍷", clue:"wine_residue", found:"An empty wine bottle with a faint bitter residue in the last inch — not from the vintage itself."}
+      ]
+    },
+    { id:"servantpassage", name:"Servant's Passage", icon:"🕳️",
+      desc:"A narrow, forgotten corridor connecting the study to the kitchen — most of the family claims not to know it exists.",
+      objects:[
+        {id:"looseknob", name:"Loose Door Panel", icon:"🚪", clue:"passage_access", found:"The panel into the study swings open silently — recently oiled, despite the passage being 'forgotten' for decades."},
+        {id:"glovefiber", name:"Glove Fiber", icon:"🧤", clue:"glove_fiber", found:"A single leather glove fiber caught on the panel's edge — expensive leather, the kind found in a gentleman's smoking jacket, not staff uniforms."}
+      ]
+    }
+  ],
+  clueMeta:{
+    ash_fragments:{name:"Charred Paper Fragments",icon:"🔥"}, draft_will:{name:"Unsigned Draft Will",icon:"📜"},
+    footprints:{name:"Dusty Footprints",icon:"👣"}, wine_residue:{name:"Bitter Wine Residue",icon:"🍷"},
+    passage_access:{name:"Oiled Passage Panel",icon:"🚪"}, glove_fiber:{name:"Leather Glove Fiber",icon:"🧤"},
+    drawer_contents:{name:"Signed Final Will",icon:"🔓"}, decoded_napkin:{name:"Decoded Napkin Note",icon:"🔓"}
+  },
+  puzzles:{
+    code:{ code:"1848", clueId:"drawer_contents", title:"Open the Desk Drawer",
+      promptText:"The cornerstone above the fireplace gives the manor's founding year.",
+      rewardText:"Inside: a finalized, signed will naming the charitable trust as sole heir, dated that very morning.", triggerObjectId:"study:deskdrawer" },
+    cipher:{ plain:"EDMUND KNOWS ABOUT THE PASSAGE HE WONT LET FATHER SIGN IT", shift:14, clueId:"decoded_napkin",
+      title:"Decode the Napkin Note", promptText:"A note scrawled on a dinner napkin is garbled by a simple letter shift.",
+      rewardText:"Decoded: a warning passed at dinner that Edmund knows about the servant passage and won't let the new will be finalized.", triggerObjectId:"diningroom:napkinnote" }
+  },
+  suspects:[
+    {id:"edmund", name:"Edmund Thorne", role:"Eldest Son", portrait:"🎩", guilty:true,
+     persona:"Edmund Thorne, 46, entitled with controlled fury simmering under a polite surface, and the actual murderer. He learned he was about to be cut from the will entirely and used the forgotten servant passage to enter the locked study, poured a poisoned glass of wine for his father under the guise of reconciling, then left through the passage before the door was ever 'found' locked. He's smooth and wounded-sounding when discussing his father in general terms, but goes cold and short when the servant passage, the glove fiber, or the drawer contents come up. He never confesses outright, and insists the door being locked from inside proves it couldn't have been him."},
+    {id:"stepmother", name:"Isabelle Thorne", role:"Second Wife", portrait:"💍", guilty:false,
+     persona:"Isabelle Thorne, 39, guarded and aware the family resents her. She stood to gain financially from the will but has a solid alibi (with the household staff the entire evening). She's openly suspicious of Edmund's temper and willing to say so plainly, though she's careful not to sound like she's settling a score."},
+    {id:"lawyer", name:"Mr. Callahan", role:"Family Lawyer", portrait:"💼", guilty:false,
+     persona:"Mr. Callahan, 61, precise and professionally discreet, drafted both versions of the will. He's reluctant to discuss client confidentiality until reminded his client is dead, at which point he becomes forthcoming. He's known about the servant passage for decades because he's worked with the family that long, but never mentioned it because 'no one asked.'"},
+    {id:"daughter", name:"Margaret Thorne", role:"Younger Daughter", portrait:"🎀", guilty:false,
+     persona:"Margaret Thorne, 33, quiet and watchful, was closest to her father emotionally. She's devastated and a little suspicious of everyone, including herself, for not noticing family tension sooner. She mentions in passing that Edmund used to sneak through 'the old passage' as a child, without initially realizing the significance, until the detective points it out."}
+  ],
+  solution:{culprit:"edmund", motive:"inheritance", method:"poisoned_wine"},
+  motiveOptions:[
+    {id:"inheritance", label:"Being cut out of the will entirely"},
+    {id:"revenge", label:"Long-held resentment unrelated to money"},
+    {id:"debt", label:"Covering up his own financial debts"},
+    {id:"protecting_someone", label:"Protecting another family member"}
+  ],
+  methodOptions:[
+    {id:"poisoned_wine", label:"Poisoned glass of wine"},
+    {id:"strangulation", label:"Strangulation"},
+    {id:"blunt_object", label:"A blunt object from the study"},
+    {id:"suffocation", label:"Suffocation"}
+  ],
+  hints:[
+    "The desk drawer in the Study needs a 4-digit code — check the fireplace cornerstone.",
+    "The dusty footprints in the Library lead somewhere the family claims doesn't exist.",
+    "The napkin note from dinner is encoded — try shifting the alphabet.",
+    "The glove fiber in the Servant's Passage isn't from any staff uniform.",
+    "Ask Edmund Thorne about the servant passage directly, once you've found the passage access."
+  ]
+},
+
+{
+  id:'hard_vault', difficulty:'hard', crimeType:'murder', icon:'🏦',
+  title:"After Hours",
+  tagline:"A vault heist goes wrong, and a guard doesn't go home.",
+  victim:"Walter Osei", victimRole:"Night Security Guard, Meridian Trust Bank",
+  briefing:"Meridian Trust's vault was breached after hours — nothing taken, oddly enough, just the outer door forced. Night guard Walter Osei was found dead in the vault corridor, and the bank's own systems show the breach could only have started from inside. Someone with legitimate access decided Walter saw too much.",
+  culpritLabel:"The Murderer", methodLabel:"Murder Weapon",
+  locations:[
+    { id:"vaultcorridor", name:"Vault Corridor", icon:"🏦",
+      desc:"Reinforced steel, flickering emergency lights, and evidence tape everywhere.",
+      objects:[
+        {id:"vaultdoor", name:"Outer Vault Door", icon:"🚪", clue:"vault_forced", found:"The outer door was forced with tools only kept in the maintenance closet — a closet requiring an employee badge."},
+        {id:"badgelog", name:"Badge Access Log", icon:"🪪", clue:"badge_log", found:"The access log shows branch manager Diane Okafor's badge opened the maintenance closet at 11:52 PM, twenty minutes after her shift officially ended."},
+        {id:"flashlight", name:"Broken Flashlight", icon:"🔦", clue:"broken_flashlight", found:"Walter's flashlight, lens shattered — he was struck with something heavy enough to break the casing."}
+      ]
+    },
+    { id:"maintenance", name:"Maintenance Closet", icon:"🧰",
+      desc:"Tool racks, mostly organized, one crowbar noticeably missing from its outline on the pegboard.",
+      objects:[
+        {id:"pegboard", name:"Tool Pegboard", icon:"🪛", clue:"missing_crowbar", found:"An outlined space on the pegboard where a crowbar should be — it's the only tool missing."},
+        {id:"lockerbox", name:"Employee Locker", icon:"🗄️", puzzle:"code", found:null}
+      ]
+    },
+    { id:"managerofc", name:"Manager's Office", icon:"🖥️",
+      desc:"Framed 'Employee of the Year' certificates and a nervous energy in the air.",
+      objects:[
+        {id:"emailthread", name:"Email Thread", icon:"📧", puzzle:"cipher", found:null},
+        {id:"debtnotice", name:"Overdue Notice", icon:"📬", clue:"debt_notice", found:"A personal overdue notice addressed to Diane Okafor — six figures, from a lender the bank's compliance team had flagged twice before."}
+      ]
+    }
+  ],
+  clueMeta:{
+    vault_forced:{name:"Forced Outer Vault Door",icon:"🚪"}, badge_log:{name:"Badge Access Log",icon:"🪪"},
+    broken_flashlight:{name:"Broken Flashlight",icon:"🔦"}, missing_crowbar:{name:"Missing Crowbar Outline",icon:"🪛"},
+    debt_notice:{name:"Personal Overdue Notice",icon:"📬"}, locker_contents:{name:"Locker Contents",icon:"🔓"},
+    decoded_email:{name:"Decoded Email Thread",icon:"🔓"}
+  },
+  puzzles:{
+    code:{ code:"1152", clueId:"locker_contents", title:"Open the Employee Locker",
+      promptText:"The badge log keeps circling one very specific timestamp.",
+      rewardText:"Inside: a duffel bag with cash-counting bands from a denomination the vault doesn't even stock — prepped for a heist that never got to happen.", triggerObjectId:"maintenance:lockerbox" },
+    cipher:{ plain:"WALTER SAW ME AT THE VAULT HANDLE IT QUIETLY", shift:6, clueId:"decoded_email",
+      title:"Decode the Email Thread", promptText:"A printed email is garbled by a simple letter shift.",
+      rewardText:"Decoded: an email sent an hour after the murder, saying Walter saw her at the vault and needs to be 'handled quietly.'", triggerObjectId:"managerofc:emailthread" }
+  },
+  suspects:[
+    {id:"diane", name:"Diane Okafor", role:"Branch Manager", portrait:"👩‍💼", guilty:true,
+     persona:"Diane Okafor, 48, composed and well-liked publicly, secretly drowning in debt to a predatory lender, and the actual murderer. She planned a fake break-in to stage a theft and skim insurance money, but Walter caught her in the vault corridor and she struck him with the missing crowbar in a panic. She's warm and helpful on procedural questions, but tight and evasive about the badge log, the missing crowbar, or her employee locker. She never confesses outright."},
+    {id:"safecracker", name:"Reuben Voss", role:"Former Employee", portrait:"🥸", guilty:false,
+     persona:"Reuben Voss, 42, bitter about being let go six months ago, was in the area that night, which looks bad on paper. He genuinely has nothing to do with this specific incident and has an alibi (traffic camera footage) once pressed to provide it. He's happy to badmouth the bank's management at length, though."},
+    {id:"partner", name:"Officer Nia Brooks", role:"Walter's Patrol Partner", portrait:"👮", guilty:false,
+     persona:"Officer Nia Brooks, 36, grieving and guilt-ridden about being on a different floor when it happened. She's sharp and observant, noticed Diane seemed 'off' in the days before, and is protective of Walter's memory, pushing back hard if anyone implies he did anything wrong."},
+    {id:"compliance", name:"Harold Yun", role:"Compliance Officer", portrait:"📊", guilty:false,
+     persona:"Harold Yun, 50, dry and by-the-book. He had flagged Diane's financial irregularities twice before and been ignored by upper management, and is a little smug about being proven right. He provides the debt notice and financial context readily, frustrated it wasn't acted on sooner."}
+  ],
+  solution:{culprit:"diane", motive:"debt_staged_heist", method:"crowbar"},
+  motiveOptions:[
+    {id:"debt_staged_heist", label:"Staging a heist to cover crushing personal debt"},
+    {id:"revenge", label:"Revenge against bank management"},
+    {id:"coverup_affair", label:"Covering up an affair"},
+    {id:"accident_panic", label:"A confrontation that turned violent by accident, unrelated to any plan"}
+  ],
+  methodOptions:[
+    {id:"crowbar", label:"Struck with a crowbar"},
+    {id:"flashlight_blow", label:"Struck with his own flashlight"},
+    {id:"firearm", label:"Shot with a firearm"},
+    {id:"pushed", label:"Fatal fall after being pushed"}
+  ],
+  hints:[
+    "The badge access log pins down exactly who opened the maintenance closet, and when.",
+    "The employee locker needs a 4-digit code — that badge log timestamp is worth trying.",
+    "The email thread in the Manager's Office is encoded — try shifting the alphabet.",
+    "The overdue notice explains a very strong financial motive.",
+    "Ask Diane Okafor about the missing crowbar directly, once you have the badge log."
+  ]
+}
+
+];
+
+/* =========================================================
+   STATE
+========================================================= */
+const SAVE_KEY='detectiveai_save_v2';
+const LB_KEY='detectiveai_leaderboard_v2';
+const STATS_KEY='detectiveai_stats_v2';
+const SETTINGS_KEY='detectiveai_settings_v2';
+
+let state=null;
+let timerHandle=null;
+let boardConnectDraft=null; // {type:'clue'|'suspect', id}
+
+function getCase(){ return CASES.find(c=>c.id===(state&&state.caseId)); }
+
+function defaultSettings(){ return {difficulty:'medium', soundOn:true}; }
+function loadSettings(){ try{return {...defaultSettings(), ...JSON.parse(localStorage.getItem(SETTINGS_KEY))};}catch(e){return defaultSettings();} }
+function saveSettings(s){ localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); }
+
+function newGameState(caseId){
+  const kase = CASES.find(c=>c.id===caseId);
+  const diff = DIFFICULTY[kase.difficulty]||DIFFICULTY.medium;
+  return {
+    caseId,
+    difficulty:kase.difficulty,
+    timeRemaining: diff.seconds,
+    hintsLeft: diff.hints,
+    cluesCollected: [],
+    inspected: [],
+    puzzlesSolved: {},
+    suspectChats: {},
+    connections: [],
+    notes: "",
+    actionsUsed: 0,
+    score: 0,
+    achievements: [],
+    finished: false,
+    currentLocation: kase.locations[0].id,
+    startedAt: Date.now()
+  };
+}
+
+function loadSave(){ try{ return JSON.parse(localStorage.getItem(SAVE_KEY)); }catch(e){ return null; } }
+function persistSave(){ if(state) localStorage.setItem(SAVE_KEY, JSON.stringify(state)); }
+function clearSave(){ localStorage.removeItem(SAVE_KEY); }
+
+function getStats(){ try{ return {...{gamesPlayed:0,casesSolved:0,bestTimeSec:null,totalScore:0,solvedCaseIds:[]}, ...JSON.parse(localStorage.getItem(STATS_KEY))}; }catch(e){ return {gamesPlayed:0,casesSolved:0,bestTimeSec:null,totalScore:0,solvedCaseIds:[]}; } }
+function saveStats(s){ localStorage.setItem(STATS_KEY, JSON.stringify(s)); }
+
+function getLeaderboard(){ try{ return JSON.parse(localStorage.getItem(LB_KEY))||[]; }catch(e){ return []; } }
+function saveLeaderboard(l){ localStorage.setItem(LB_KEY, JSON.stringify(l)); }
+
+/* =========================================================
+   UTIL
+========================================================= */
+function qs(sel,root=document){return root.querySelector(sel);}
+function qsa(sel,root=document){return [...root.querySelectorAll(sel)];}
+function fmtTime(sec){
+  sec=Math.max(0,Math.round(sec));
+  const m=Math.floor(sec/60), s=sec%60;
+  return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+}
+function toast(msg){
+  const t=qs('#toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(toast._h); toast._h=setTimeout(()=>t.classList.remove('show'),2600);
+}
+function escapeHtml(s){ return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* Web Audio sound effects (no external files) */
+let actx=null;
+function beep(freq=440,dur=0.09,type='sine',vol=0.05){
+  const settings = loadSettings();
+  if(!settings.soundOn) return;
+  try{
+    if(!actx) actx = new (window.AudioContext||window.webkitAudioContext)();
+    const o=actx.createOscillator(), g=actx.createGain();
+    o.type=type; o.frequency.value=freq;
+    g.gain.value=vol;
+    o.connect(g); g.connect(actx.destination);
+    o.start();
+    g.gain.exponentialRampToValueAtTime(0.0001, actx.currentTime+dur);
+    o.stop(actx.currentTime+dur);
+  }catch(e){}
+}
+const sfx = {
+  click:()=>beep(320,0.05,'square',0.03),
+  clue:()=>{beep(660,0.09,'triangle',0.05); setTimeout(()=>beep(880,0.12,'triangle',0.05),90);},
+  error:()=>beep(140,0.18,'sawtooth',0.05),
+  success:()=>{beep(523,0.1,'triangle',0.05); setTimeout(()=>beep(659,0.1,'triangle',0.05),100); setTimeout(()=>beep(784,0.16,'triangle',0.05),200);},
+  send:()=>beep(400,0.05,'sine',0.03)
+};
+
+/* =========================================================
+   ROUTER
+========================================================= */
+const TABS=[
+  {id:'scene', label:'Crime Scene'},
+  {id:'suspects', label:'Suspects'},
+  {id:'evidence', label:'Evidence Board'},
+  {id:'accuse', label:'Accuse'}
+];
+const GAME_VIEWS = ['scene','suspects','chat','evidence','accuse'];
+
+function renderNav(){
+  const nav=qs('#navTabs');
+  if(!state || !GAME_VIEWS.includes(currentView)){ nav.innerHTML=''; return; }
+  nav.innerHTML = TABS.map(t=>`<button data-tab="${t.id}" class="${currentView===t.id||(currentView==='chat'&&t.id==='suspects')?'active':''}">${t.label}</button>`).join('');
+  qsa('button',nav).forEach(b=>b.addEventListener('click',()=>{ sfx.click(); goTo(b.dataset.tab); }));
+}
+function renderHud(){
+  const hud=qs('#hud');
+  if(!state || !GAME_VIEWS.includes(currentView)){ hud.innerHTML=''; return; }
+  const kase=getCase();
+  const low = state.timeRemaining < 60;
+  hud.innerHTML = `
+    <span>Clues <b style="color:var(--brass-bright)">${state.cluesCollected.length}</b>/${Object.keys(kase.clueMeta).length}</span>
+    <span class="clock ${low?'low':''}">⏱ ${fmtTime(state.timeRemaining)}</span>
+    <button class="iconbtn" id="hintBtn">💡 Hint (${state.hintsLeft})</button>
+    <button class="iconbtn" id="saveBtn">💾 Save</button>
+    <button class="iconbtn" id="homeBtn">🏠 Home</button>
+  `;
+  qs('#hintBtn')?.addEventListener('click', showHint);
+  qs('#saveBtn')?.addEventListener('click', ()=>{ persistSave(); toast('Case progress saved.'); });
+  qs('#homeBtn')?.addEventListener('click', ()=>{ persistSave(); goTo('home'); });
+}
+
+let currentView='home';
+function goTo(view){
+  currentView=view;
+  renderNav();
+  renderHud();
+  const root=qs('#viewRoot');
+  root.innerHTML='';
+  root.className='view';
+  const renderers={
+    home: renderHome, caseSelect: renderCaseSelect, briefing: renderBriefing, scene: renderScene,
+    suspects: renderSuspectsList, chat: renderChat, evidence: renderEvidence,
+    accuse: renderAccuse, result: renderResult, leaderboard: renderLeaderboard, settings: renderSettings
+  };
+  (renderers[view]||renderHome)(root);
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* =========================================================
+   TIMER
+========================================================= */
+function startTimer(){
+  stopTimer();
+  timerHandle=setInterval(()=>{
+    if(!state||state.finished) return;
+    state.timeRemaining -= 1;
+    if(state.timeRemaining<=0){
+      state.timeRemaining=0;
+      renderHud();
+      stopTimer();
+      toast("Time's up — you'll have to make your best guess.");
+      goTo('accuse');
+      return;
+    }
+    renderHud();
+  },1000);
+}
+function stopTimer(){ if(timerHandle) clearInterval(timerHandle); timerHandle=null; }
+
+/* =========================================================
+   HOME
+========================================================= */
+function renderHome(root){
+  stopTimer();
+  const settings=loadSettings();
+  const save=loadSave();
+  const stats=getStats();
+  const saveCase = save ? CASES.find(c=>c.id===save.caseId) : null;
+  root.innerHTML=`
+    <div class="hero">
+      <div class="tag">Case Files — Choose Your Difficulty</div>
+      <h1>Detective AI</h1>
+      <p class="lede">Nine cases. Three difficulty tiers. Thieves, kidnappers, and killers — all with something to hide.</p>
+      <div class="menu-grid">
+        <button class="menu-btn primary" id="startBtn"><span class="ic">🆕</span><div>Start Game<small>Browse cases and begin</small></div></button>
+        <button class="menu-btn" id="continueBtn" ${save?'':'disabled style="opacity:.4;cursor:not-allowed;"'}><span class="ic">▶️</span><div>Continue Game<small>${save? 'Resume "'+(saveCase?saveCase.title:'a case')+'"' : 'No saved case found'}</small></div></button>
+        <button class="menu-btn" id="leaderboardBtn"><span class="ic">🏆</span><div>Leaderboard<small>Fastest, sharpest detectives</small></div></button>
+        <button class="menu-btn" id="settingsBtn"><span class="ic">⚙️</span><div>Settings<small>Sound &amp; preferences</small></div></button>
+      </div>
+      <div class="diff-row">
+        ${Object.entries(DIFFICULTY).map(([k,v])=>`<button class="diff-chip ${settings.difficulty===k?'active':''}" data-diff="${k}">${v.label} — ${Math.round(v.seconds/60)} min</button>`).join('')}
+      </div>
+      <div class="stats-strip">
+        <div><b>${stats.gamesPlayed}</b>Cases Opened</div>
+        <div><b>${stats.casesSolved}</b>Cases Solved</div>
+        <div><b>${stats.bestTimeSec? fmtTime(stats.bestTimeSec):'—'}</b>Best Time</div>
+        <div><b>${stats.totalScore}</b>Total Score</div>
+      </div>
+    </div>
+  `;
+  qsa('.diff-chip',root).forEach(b=>b.addEventListener('click',()=>{
+    sfx.click();
+    const s=loadSettings(); s.difficulty=b.dataset.diff; saveSettings(s);
+    renderHome(root);
+  }));
+  qs('#startBtn').addEventListener('click',()=>{ sfx.click(); goTo('caseSelect'); });
+  qs('#continueBtn')?.addEventListener('click',()=>{
+    if(!save) return;
+    sfx.click();
+    state = save;
+    goTo('scene');
+    startTimer();
+  });
+  qs('#leaderboardBtn').addEventListener('click',()=>{ sfx.click(); goTo('leaderboard'); });
+  qs('#settingsBtn').addEventListener('click',()=>{ sfx.click(); goTo('settings'); });
+}
+
+function renderCaseSelect(root){
+  const settings=loadSettings();
+  const diff = settings.difficulty;
+  const stats=getStats();
+  const casesForDiff = CASES.filter(c=>c.difficulty===diff);
+  const crimeIcons = {murder:'🔪', theft:'💎', kidnapping:'🕳️', fraud:'🔨', assault:'🩹'};
+  root.innerHTML=`
+    <div class="panel">
+      <h2 class="section-title">Choose a Case — ${DIFFICULTY[diff].label}</h2>
+      <div class="diff-row" style="margin-bottom:22px;">
+        ${Object.entries(DIFFICULTY).map(([k,v])=>`<button class="diff-chip ${diff===k?'active':''}" data-diff="${k}">${v.label} — ${Math.round(v.seconds/60)} min</button>`).join('')}
+      </div>
+      <div class="case-grid">
+        ${casesForDiff.map(c=>`
+          <button class="case-card" data-case="${c.id}">
+            ${stats.solvedCaseIds.includes(c.id)?'<span class="solved-tag">✓ Solved</span>':''}
+            <span class="case-icon">${c.icon}</span>
+            <span class="case-crime">${crimeIcons[c.crimeType]||'🗂️'} ${c.crimeType.toUpperCase()}</span>
+            <b>${c.title}</b>
+            <span class="case-tagline">${c.tagline}</span>
+          </button>
+        `).join('')}
+      </div>
+      <div class="modal-actions"><button class="btn ghost" id="backBtn">← Back to Home</button></div>
+    </div>
+  `;
+  qsa('.diff-chip',root).forEach(b=>b.addEventListener('click',()=>{
+    sfx.click(); const s=loadSettings(); s.difficulty=b.dataset.diff; saveSettings(s); renderCaseSelect(root);
+  }));
+  qsa('.case-card',root).forEach(b=>b.addEventListener('click',()=>{
+    sfx.click();
+    state = newGameState(b.dataset.case);
+    persistSave();
+    goTo('briefing');
+  }));
+  qs('#backBtn').addEventListener('click',()=>goTo('home'));
+}
+
+function renderSettings(root){
+  const s=loadSettings();
+  root.innerHTML=`
+    <div class="panel briefing-card">
+      <h2 class="section-title">Settings</h2>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <span>Sound effects</span>
+        <button class="btn ${s.soundOn?'':'ghost'}" id="soundToggle">${s.soundOn?'On':'Off'}</button>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <span>Default difficulty</span>
+        <span class="mono" style="color:var(--brass-bright)">${DIFFICULTY[s.difficulty].label}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span>Clear saved case &amp; stats</span>
+        <button class="btn danger" id="resetBtn">Reset All Data</button>
+      </div>
+      <div class="modal-actions"><button class="btn ghost" id="backBtn">← Back to Home</button></div>
+    </div>
+  `;
+  qs('#soundToggle').addEventListener('click',()=>{
+    const cur=loadSettings(); cur.soundOn=!cur.soundOn; saveSettings(cur); sfx.click(); renderSettings(root);
+  });
+  qs('#resetBtn').addEventListener('click',()=>{
+    if(confirm('This clears your saved case, leaderboard, and stats. Continue?')){
+      localStorage.removeItem(SAVE_KEY); localStorage.removeItem(LB_KEY); localStorage.removeItem(STATS_KEY);
+      toast('All local data cleared.'); goTo('home');
+    }
+  });
+  qs('#backBtn').addEventListener('click',()=>goTo('home'));
+}
+
+function renderLeaderboard(root){
+  const lb=getLeaderboard().sort((a,b)=> (b.won-a.won) || (b.score-a.score) || (a.timeUsed-b.timeUsed)).slice(0,15);
+  root.innerHTML=`
+    <div class="panel">
+      <h2 class="section-title">Leaderboard</h2>
+      ${lb.length? `<table class="lb"><thead><tr><th>#</th><th>Case</th><th>Result</th><th>Difficulty</th><th>Score</th><th>Time Used</th></tr></thead>
+        <tbody>${lb.map((r,i)=>{ const c=CASES.find(x=>x.id===r.caseId); return `<tr><td>${i+1}</td><td>${c?c.title:'—'}</td><td>${r.won?'✅ Solved':'❌ Wrong'}</td><td>${DIFFICULTY[r.difficulty]?.label||r.difficulty}</td><td>${r.score}</td><td>${fmtTime(r.timeUsed)}</td></tr>`; }).join('')}</tbody></table>`
+        : `<div class="empty-note">No cases closed yet. Solve one to make the board.</div>`}
+      <div class="modal-actions"><button class="btn ghost" id="backBtn">← Back to Home</button></div>
+    </div>
+  `;
+  qs('#backBtn').addEventListener('click',()=>goTo('home'));
+}
+
+/* =========================================================
+   BRIEFING
+========================================================= */
+function renderBriefing(root){
+  const kase=getCase();
+  root.innerHTML=`
+    <div class="panel briefing-card">
+      <div class="stamp">CONFIDENTIAL</div>
+      <div class="photo-frame">${kase.icon}</div>
+      <h2 style="text-align:center;color:var(--paper);">${kase.title}</h2>
+      <p style="text-align:center;color:var(--text-faint);font-family:var(--font-mono);font-size:13px;">CASE: ${kase.victim} — ${kase.victimRole}</p>
+      <p>${kase.briefing}</p>
+      <p style="color:var(--text-faint);font-size:14px;">Difficulty: <b style="color:var(--brass-bright)">${DIFFICULTY[state.difficulty].label}</b> · Time limit: <b style="color:var(--brass-bright)">${fmtTime(state.timeRemaining)}</b></p>
+      <div class="modal-actions" style="justify-content:center;">
+        <button class="btn" id="beginBtn">Begin Investigation →</button>
+      </div>
+    </div>
+  `;
+  qs('#beginBtn').addEventListener('click',()=>{
+    sfx.click();
+    startTimer();
+    goTo('scene');
+  });
+}
+
+/* =========================================================
+   SCENE
+========================================================= */
+function renderScene(root){
+  const kase=getCase();
+  const loc = kase.locations.find(l=>l.id===state.currentLocation) || kase.locations[0];
+  root.innerHTML=`
+    <div class="panel">
+      <h2 class="section-title">Crime Scene — ${kase.title}</h2>
+      <div class="loc-tabs">
+        ${kase.locations.map(l=>`<button data-loc="${l.id}" class="${l.id===loc.id?'active':''}">${l.icon} ${l.name}</button>`).join('')}
+      </div>
+      <p class="loc-desc">${loc.desc}</p>
+      <div class="object-grid">
+        ${loc.objects.map(o=>{
+          const done = state.inspected.includes(loc.id+':'+o.id);
+          return `<button class="object-card ${done?'done':''}" data-obj="${o.id}">
+            ${done?'<span class="found-tag">Found</span>':''}
+            <span class="ic">${o.icon}</span>
+            <span class="name">${o.name}</span>
+          </button>`;
+        }).join('')}
+      </div>
+    </div>
+  `;
+  qsa('[data-loc]',root).forEach(b=>b.addEventListener('click',()=>{
+    sfx.click();
+    state.currentLocation=b.dataset.loc; persistSave();
+    renderScene(root);
+  }));
+  qsa('[data-obj]',root).forEach(b=>b.addEventListener('click',()=>inspectObject(kase,loc,b.dataset.obj,root)));
+}
+
+function inspectObject(kase,loc,objId,root){
+  const obj = loc.objects.find(o=>o.id===objId);
+  const key = loc.id+':'+objId;
+  const already = state.inspected.includes(key);
+  if(!already){
+    state.inspected.push(key);
+    state.actionsUsed++;
+    if(obj.clue && !state.cluesCollected.includes(obj.clue)){
+      state.cluesCollected.push(obj.clue);
+      state.score += 10;
+      sfx.clue();
+      checkAchievements();
+    } else if(!obj.puzzle){
+      sfx.click();
+    }
+    persistSave();
+  } else {
+    sfx.click();
+  }
+  if(obj.puzzle==='cipher' && !state.puzzlesSolved.cipher){ openCipherPuzzle(kase); return; }
+  if(obj.puzzle==='code' && !state.puzzlesSolved.code){ openCodePuzzle(kase, kase.puzzles.code); return; }
+  showInspectModal(obj);
+}
+
+function showInspectModal(obj){
+  const overlay=document.createElement('div');
+  overlay.className='modal-overlay';
+  overlay.innerHTML=`
+    <div class="modal">
+      <h3>${obj.icon} ${obj.name}</h3>
+      <p style="color:var(--paper-dim)">${obj.found || (obj.puzzle? "You've already puzzled this out." : 'Nothing of note here.')}</p>
+      <div class="modal-actions"><button class="btn" id="closeInspect">Close</button></div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  qs('#closeInspect',overlay).addEventListener('click',()=>{ sfx.click(); overlay.remove(); renderHud(); });
+  overlay.addEventListener('click',e=>{ if(e.target===overlay) overlay.remove(); });
+}
+
+/* ---- Cipher puzzle (generic, driven by kase.puzzles.cipher) ---- */
+function openCipherPuzzle(kase){
+  const cfg = kase.puzzles.cipher;
+  const cipherText = caesar(cfg.plain, cfg.shift);
+  const overlay=document.createElement('div');
+  overlay.className='modal-overlay';
+  overlay.innerHTML=`
+    <div class="modal">
+      <h3>🔐 ${cfg.title||'Decode the Note'}</h3>
+      <p style="color:var(--paper-dim);font-size:14px;">${cfg.promptText||'This note is shifted using a simple letter cipher. Slide until it reads clearly, then confirm.'}</p>
+      <p class="mono" style="color:var(--blood-bright);letter-spacing:.08em;">${cipherText}</p>
+      <div class="slider-row">
+        <span class="mono" style="font-size:12px;color:var(--text-faint)">Shift</span>
+        <input type="range" min="0" max="25" value="0" id="shiftSlider">
+        <span class="mono" id="shiftVal" style="width:26px;text-align:right;">0</span>
+      </div>
+      <div class="decoded-box" id="decodedBox">${cipherText}</div>
+      <div id="cipherFeedback" class="feedback"></div>
+      <div class="modal-actions">
+        <button class="btn ghost" id="cipherClose">Close</button>
+        <button class="btn" id="cipherConfirm">Confirm Decode</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  const slider=qs('#shiftSlider',overlay), box=qs('#decodedBox',overlay), val=qs('#shiftVal',overlay);
+  function update(){
+    const n=parseInt(slider.value,10);
+    val.textContent=n;
+    box.textContent=caesar(cipherText,n);
+  }
+  slider.addEventListener('input',update);
+  update();
+  qs('#cipherClose',overlay).addEventListener('click',()=>{overlay.remove();});
+  qs('#cipherConfirm',overlay).addEventListener('click',()=>{
+    const n=parseInt(slider.value,10);
+    const decoded=caesar(cipherText,n);
+    const fb=qs('#cipherFeedback',overlay);
+    if(decoded.trim().toUpperCase()===cfg.plain){
+      sfx.success();
+      state.puzzlesSolved.cipher=true;
+      if(!state.cluesCollected.includes(cfg.clueId)){
+        state.cluesCollected.push(cfg.clueId); state.score+=20;
+      }
+      persistSave(); checkAchievements();
+      fb.textContent='Decoded! The note now reads clearly.'; fb.className='feedback ok';
+      setTimeout(()=>{ overlay.remove(); renderHud(); toast('🔓 '+(cfg.rewardText||'Decoded — added to your evidence.')); },900);
+    } else {
+      sfx.error();
+      fb.textContent='Not quite readable yet. Keep adjusting the shift.'; fb.className='feedback bad';
+    }
+  });
+}
+
+/* ---- Code / keypad puzzle (generic, driven by a puzzles.code config) ---- */
+function openCodePuzzle(kase, cfg){
+  let entered='';
+  const overlay=document.createElement('div');
+  overlay.className='modal-overlay';
+  overlay.innerHTML=`
+    <div class="modal">
+      <h3>🔢 ${cfg.title||'Crack the Code'}</h3>
+      <p style="color:var(--paper-dim);font-size:14px;">${cfg.promptText||'Enter the 4-digit code.'}</p>
+      <div class="code-display" id="codeDisp">${'‑'.repeat((cfg.code||'0000').length)}</div>
+      <div class="keypad" id="keypad">
+        ${[1,2,3,4,5,6,7,8,9,'⌫',0,'✔'].map(k=>`<button data-k="${k}">${k}</button>`).join('')}
+      </div>
+      <div id="codeFeedback" class="feedback"></div>
+      <div class="modal-actions"><button class="btn ghost" id="codeClose">Close</button></div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  const disp=qs('#codeDisp',overlay);
+  const codeLen=(cfg.code||'0000').length;
+  function refresh(){
+    disp.textContent = (entered.padEnd(codeLen,'‑')).split('').join(' ');
+  }
+  refresh();
+  qs('#keypad',overlay).addEventListener('click',e=>{
+    const b=e.target.closest('button'); if(!b) return;
+    const k=b.dataset.k;
+    const fb=qs('#codeFeedback',overlay);
+    if(k==='⌫'){ entered=entered.slice(0,-1); sfx.click(); }
+    else if(k==='✔'){
+      if(entered===cfg.code){
+        sfx.success();
+        state.puzzlesSolved.code=true;
+        if(!state.cluesCollected.includes(cfg.clueId)){ state.cluesCollected.push(cfg.clueId); state.score+=20; }
+        persistSave(); checkAchievements();
+        fb.textContent='Correct!'; fb.className='feedback ok';
+        setTimeout(()=>{overlay.remove(); renderHud(); toast('🔓 '+(cfg.rewardText||'Unlocked — new evidence added.'));},1000);
+        return;
+      } else {
+        sfx.error(); fb.textContent='Incorrect code.'; fb.className='feedback bad'; entered='';
+      }
+    } else if(entered.length<codeLen){ entered+=k; sfx.click(); }
+    refresh();
+  });
+  qs('#codeClose',overlay).addEventListener('click',()=>overlay.remove());
+}
+
+/* =========================================================
+   SUSPECTS / CHAT
+========================================================= */
+let activeSuspectId=null;
+
+function renderSuspectsList(root){
+  const kase=getCase();
+  root.innerHTML=`
+    <div class="panel">
+      <h2 class="section-title">Suspects — ${kase.title}</h2>
+      <div class="suspect-grid">
+        ${kase.suspects.map(s=>`
+          <button class="suspect-card" data-sid="${s.id}">
+            <div class="portrait">${s.portrait}</div>
+            <div style="color:var(--paper);font-weight:600;">${s.name}</div>
+            <div class="role">${s.role}</div>
+          </button>
+        `).join('')}
+      </div>
+    </div>
+  `;
+  qsa('[data-sid]',root).forEach(b=>b.addEventListener('click',()=>{
+    sfx.click(); activeSuspectId=b.dataset.sid; goTo('chat');
+  }));
+}
+
+function buildSystemPrompt(kase,suspect){
+  const known = state.cluesCollected.map(c=>kase.clueMeta[c]?.name).filter(Boolean).join(', ') || 'none yet';
+  return `You are roleplaying as a character in a murder/crime mystery game. Stay fully in character at all times and never break the fourth wall or mention being an AI.
+
+CHARACTER: ${suspect.persona}
+
+CASE CONTEXT: Case title "${kase.title}". The central victim or subject of the crime is ${kase.victim} (${kase.victimRole}). You are being interrogated by a detective (the player) investigating this case.
+
+RULES:
+- Never explicitly confess to the crime even if you are guilty, unless the detective presents overwhelming, specific evidence AND directly accuses you by name — even then, stay in character about how you react (denial, breakdown, lawyering up, etc. depending on personality), don't just flatly admit guilt for game balance reasons.
+- If you are NOT guilty, never falsely confess and never claim to know for certain who did it — you may share honest suspicions if it fits your character.
+- Only answer based on what your character would plausibly know. Do not invent details that contradict the character description.
+- If the player asks something unrelated to the case, respond briefly in character and redirect to the investigation.
+- If the player presents strong evidence (mentions specific items from the case), react appropriately in character — get more nervous, defensive, or forthcoming as fits the personality.
+- Keep responses conversational and fairly short (2-5 sentences), like real spoken dialogue, not essays.
+- The detective has currently collected this evidence (for your awareness of what they might reference): ${known}.
+- Never reference game mechanics, scoring, or that this is a game.`;
+}
+
+function renderChat(root){
+  const kase=getCase();
+  const suspect = kase.suspects.find(s=>s.id===activeSuspectId);
+  if(!suspect){ goTo('suspects'); return; }
+  if(!state.suspectChats[suspect.id]) state.suspectChats[suspect.id]=[];
+  const history = state.suspectChats[suspect.id];
+
+  root.innerHTML=`
+    <div class="panel">
+      <div class="chat-wrap">
+        <div class="chat-header">
+          <div class="portrait" style="width:44px;height:44px;font-size:22px;">${suspect.portrait}</div>
+          <div>
+            <div style="color:var(--paper);font-weight:600;">${suspect.name}</div>
+            <div class="role">${suspect.role}</div>
+          </div>
+          <button class="iconbtn" style="margin-left:auto;" id="backToSuspects">← All Suspects</button>
+        </div>
+        <div class="chat-log" id="chatLog"></div>
+        <div class="present-row">
+          <select id="presentSelect">
+            <option value="">Present evidence…</option>
+            ${state.cluesCollected.map(c=>`<option value="${c}">${kase.clueMeta[c]?.icon||''} ${kase.clueMeta[c]?.name||c}</option>`).join('')}
+          </select>
+          <button id="presentBtn">Present</button>
+        </div>
+        <div class="chat-input-row">
+          <input type="text" id="chatInput" placeholder="Ask ${suspect.name} a question…" maxlength="300">
+          <button id="sendBtn">Ask</button>
+        </div>
+      </div>
+    </div>
+  `;
+  qs('#backToSuspects').addEventListener('click',()=>{sfx.click(); goTo('suspects');});
+
+  function renderLog(){
+    const log=qs('#chatLog');
+    log.innerHTML = history.length? history.map(m=>`
+      <div class="bubble ${m.role==='user'?'you':'them'}">
+        <span class="who">${m.role==='user'?'You':suspect.name}</span>${escapeHtml(m.content)}
+      </div>
+    `).join('') : `<div style="color:var(--text-faint);font-style:italic;text-align:center;margin-top:30px;">You haven't questioned ${suspect.name} yet. Ask something.</div>`;
+    log.scrollTop = log.scrollHeight;
+  }
+  renderLog();
+
+  async function sendMessage(text){
+    if(!text.trim()) return;
+    sfx.send();
+    history.push({role:'user',content:text.trim()});
+    state.actionsUsed++;
+    persistSave();
+    renderLog();
+    qs('#chatInput').value='';
+    qs('#sendBtn').disabled=true;
+
+    const thinkingBubble=document.createElement('div');
+    thinkingBubble.className='bubble them thinking';
+    thinkingBubble.innerHTML=`<span class="who">${suspect.name}</span>…thinking…`;
+    qs('#chatLog').appendChild(thinkingBubble);
+    qs('#chatLog').scrollTop=qs('#chatLog').scrollHeight;
+
+    try{
+      const apiMessages = history.map(m=>({role:m.role, content:m.content}));
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({
+          model:"claude-sonnet-4-6",
+          max_tokens:400,
+          system: buildSystemPrompt(kase,suspect),
+          messages: apiMessages
+        })
+      });
+      const data = await response.json();
+      let reply = "…";
+      if(data && data.content){
+        reply = data.content.map(b=>b.type==='text'?b.text:'').join('').trim() || "…";
+      } else if(data && data.error){
+        reply = "(The suspect seems unwilling to respond right now. Try again in a moment.)";
+      }
+      thinkingBubble.remove();
+      history.push({role:'assistant',content:reply});
+      persistSave();
+      renderLog();
+      checkAchievements();
+    }catch(e){
+      thinkingBubble.remove();
+      history.push({role:'assistant',content:"(Static on the line — try asking again.)"});
+      renderLog();
+    }finally{
+      qs('#sendBtn').disabled=false;
+    }
+  }
+
+  qs('#sendBtn').addEventListener('click',()=>sendMessage(qs('#chatInput').value));
+  qs('#chatInput').addEventListener('keydown',e=>{ if(e.key==='Enter') sendMessage(qs('#chatInput').value); });
+  qs('#presentBtn').addEventListener('click',()=>{
+    const sel=qs('#presentSelect');
+    const clueId=sel.value;
+    if(!clueId){ toast('Choose a piece of evidence first.'); return; }
+    const meta=kase.clueMeta[clueId];
+    sendMessage(`I want to present this evidence to you: ${meta.name}. What do you have to say about it?`);
+    sel.value='';
+  });
+}
+
+/* =========================================================
+   EVIDENCE BOARD
+========================================================= */
+function renderEvidence(root){
+  const kase=getCase();
+  const clues = state.cluesCollected;
+  const codeCfg = kase.puzzles && kase.puzzles.code;
+  const showCodeButton = codeCfg && codeCfg.requiresClues && !state.puzzlesSolved.code &&
+    codeCfg.requiresClues.every(id=>clues.includes(id));
+  root.innerHTML=`
+    <div class="panel">
+      <h2 class="section-title">Evidence Board — ${kase.title}</h2>
+      <p style="color:var(--text-faint);font-size:13px;">Click a clue, then click a suspect, to pin a connection between them. Click a connection chip to remove it.</p>
+      ${showCodeButton ? `<div class="modal-actions" style="justify-content:flex-start;margin:6px 0 16px;"><button class="btn" id="unlockCodeBtn">🔓 You have everything you need — ${codeCfg.title||'Crack the Code'}</button></div>` : ''}
+      <div class="board-wrap">
+        <div class="board-cols">
+          <div class="board-col">
+            <h4>🗃 Clues (${clues.length})</h4>
+            ${clues.length? clues.map(c=>`<div class="pin-card" data-clue="${c}"><b>${kase.clueMeta[c].icon} ${kase.clueMeta[c].name}</b><span class="desc">Tap to link to a suspect</span></div>`).join('') : `<div class="empty-note">No clues collected yet — explore the crime scene.</div>`}
+          </div>
+          <div class="board-col">
+            <h4>🕴 Suspects</h4>
+            ${kase.suspects.map(s=>`<div class="pin-card" data-suspect="${s.id}"><b>${s.portrait} ${s.name}</b><span class="desc">${s.role}</span></div>`).join('')}
+          </div>
+        </div>
+        <div class="conn-list" id="connList"></div>
+        <div class="connections-hint">Interrogation history and free notes below help you track your own theory.</div>
+      </div>
+      <textarea class="notes-area" id="notesArea" placeholder="Detective's notes — jot down your working theory here...">${escapeHtml(state.notes||'')}</textarea>
+    </div>
+  `;
+  qs('#unlockCodeBtn')?.addEventListener('click',()=>{ sfx.click(); openCodePuzzle(kase, codeCfg); });
+
+  function renderConnections(){
+    const list=qs('#connList');
+    list.innerHTML = state.connections.map((c,i)=>{
+      const clueName = kase.clueMeta[c.clue]?.name||c.clue;
+      const susp = kase.suspects.find(s=>s.id===c.suspect);
+      return `<span class="conn-chip">${clueName} ↔ ${susp?susp.name:c.suspect}<button data-i="${i}">✕</button></span>`;
+    }).join('') || `<span style="color:var(--text-faint);font-size:12px;font-family:var(--font-mono)">No connections pinned yet.</span>`;
+    qsa('button[data-i]',list).forEach(b=>b.addEventListener('click',()=>{
+      state.connections.splice(parseInt(b.dataset.i,10),1); persistSave(); renderConnections();
+    }));
+  }
+  renderConnections();
+
+  boardConnectDraft=null;
+  qsa('.pin-card[data-clue]',root).forEach(card=>card.addEventListener('click',()=>{
+    sfx.click();
+    qsa('.pin-card',root).forEach(c=>c.classList.remove('selected'));
+    boardConnectDraft={type:'clue',id:card.dataset.clue};
+    card.classList.add('selected');
+  }));
+  qsa('.pin-card[data-suspect]',root).forEach(card=>card.addEventListener('click',()=>{
+    if(boardConnectDraft && boardConnectDraft.type==='clue'){
+      sfx.success();
+      const exists = state.connections.some(c=>c.clue===boardConnectDraft.id && c.suspect===card.dataset.suspect);
+      if(!exists){
+        state.connections.push({clue:boardConnectDraft.id, suspect:card.dataset.suspect});
+        state.score += 2;
+        persistSave();
+      }
+      boardConnectDraft=null;
+      qsa('.pin-card',root).forEach(c=>c.classList.remove('selected'));
+      renderConnections();
+    } else {
+      sfx.click();
+    }
+  }));
+
+  const notesArea=qs('#notesArea');
+  let saveTimeout;
+  notesArea.addEventListener('input',()=>{
+    clearTimeout(saveTimeout);
+    saveTimeout=setTimeout(()=>{ state.notes=notesArea.value; persistSave(); },500);
+  });
+}
+
+/* =========================================================
+   ACCUSATION
+========================================================= */
+function renderAccuse(root){
+  const kase=getCase();
+  root.innerHTML=`
+    <div class="panel accuse-grid">
+      <h2 class="section-title" style="text-align:center;">Final Accusation</h2>
+      <p style="text-align:center;color:var(--text-muted);">Choose carefully. You only get one shot at this.</p>
+      <div class="accuse-field">
+        <label>${kase.culpritLabel||'The Culprit'}</label>
+        <select id="accCulprit"><option value="">— Select a suspect —</option>${kase.suspects.map(s=>`<option value="${s.id}">${s.name} (${s.role})</option>`).join('')}</select>
+      </div>
+      <div class="accuse-field">
+        <label>The Motive</label>
+        <select id="accMotive"><option value="">— Select a motive —</option>${kase.motiveOptions.map(m=>`<option value="${m.id}">${m.label}</option>`).join('')}</select>
+      </div>
+      <div class="accuse-field">
+        <label>${kase.methodLabel||'Method'}</label>
+        <select id="accMethod"><option value="">— Select an option —</option>${kase.methodOptions.map(w=>`<option value="${w.id}">${w.label}</option>`).join('')}</select>
+      </div>
+      <div class="modal-actions" style="justify-content:center;">
+        <button class="btn danger" id="accuseBtn">Make Accusation</button>
+      </div>
+      <div class="accuse-warning">This ends the investigation, win or lose.</div>
+    </div>
+  `;
+  qs('#accuseBtn').addEventListener('click',()=>{
+    const culprit=qs('#accCulprit').value, motive=qs('#accMotive').value, method=qs('#accMethod').value;
+    if(!culprit||!motive||!method){ sfx.error(); toast('Select a suspect, motive, and '+(kase.methodLabel||'method').toLowerCase()+' before accusing.'); return; }
+    finalizeCase(culprit,motive,method);
+  });
+}
+
+function finalizeCase(culprit,motive,method){
+  stopTimer();
+  const kase=getCase();
+  const sol=kase.solution;
+  const correctCulprit = culprit===sol.culprit;
+  const correctMotive = motive===sol.motive;
+  const correctMethod = method===sol.method;
+  const won = correctCulprit && correctMotive && correctMethod;
+
+  let scoreBonus = 0;
+  if(correctCulprit) scoreBonus+=40;
+  if(correctMotive) scoreBonus+=20;
+  if(correctMethod) scoreBonus+=20;
+  const diffSeconds = DIFFICULTY[state.difficulty].seconds;
+  const timeUsed = diffSeconds - state.timeRemaining;
+  const speedBonus = won ? Math.max(0, Math.round((state.timeRemaining/diffSeconds)*40)) : 0;
+  state.score += scoreBonus + speedBonus;
+  state.finished = {won, culprit, motive, method, timeUsed};
+  persistSave();
+
+  // stats
+  const stats=getStats();
+  stats.gamesPlayed+=1;
+  if(won){
+    stats.casesSolved+=1;
+    if(stats.bestTimeSec===null || timeUsed<stats.bestTimeSec) stats.bestTimeSec=timeUsed;
+    if(!stats.solvedCaseIds.includes(kase.id)) stats.solvedCaseIds.push(kase.id);
+  }
+  stats.totalScore+=state.score;
+  saveStats(stats);
+
+  // leaderboard
+  const lb=getLeaderboard();
+  lb.push({won,score:state.score,timeUsed,difficulty:state.difficulty,caseId:kase.id,date:Date.now()});
+  saveLeaderboard(lb);
+
+  if(won) checkAchievements(true);
+  clearSave();
+  goTo('result');
+}
+
+/* =========================================================
+   RESULT
+========================================================= */
+function buildResultText(kase,won,culpritId,motiveId,methodId){
+  const tmpl = CRIME_TEMPLATES[kase.crimeType]||CRIME_TEMPLATES.murder;
+  const str = won? tmpl.win : tmpl.lose;
+  const nameFor = id => (kase.suspects.find(s=>s.id===id)||{}).name || '???';
+  const motiveFor = id => ((kase.motiveOptions.find(m=>m.id===id)||{}).label || id).toLowerCase();
+  const methodFor = id => ((kase.methodOptions.find(m=>m.id===id)||{}).label || id).toLowerCase();
+  const finalCulprit = won ? culpritId : kase.solution.culprit;
+  const finalMotive = won ? motiveId : kase.solution.motive;
+  const finalMethod = won ? methodId : kase.solution.method;
+  return str
+    .replace('{culprit}', nameFor(finalCulprit))
+    .replace('{victim}', kase.victim)
+    .replace('{motive}', motiveFor(finalMotive))
+    .replace('{method}', methodFor(finalMethod));
+}
+
+function renderResult(root){
+  const kase=getCase();
+  const f = state.finished;
+  const text = buildResultText(kase, f.won, f.culprit, f.motive, f.method);
+
+  root.innerHTML=`
+    <div class="panel">
+      <div class="result-hero">
+        <div class="verdict ${f.won?'win':'lose'}">${f.won?'CASE CLOSED':'CASE UNSOLVED'}</div>
+        <div class="result-body">
+          <p>${text}</p>
+        </div>
+        <div class="score-row">
+          <div><b>${state.score}</b>Score</div>
+          <div><b>${fmtTime(f.timeUsed)}</b>Time Used</div>
+          <div><b>${state.cluesCollected.length}</b>Clues Found</div>
+          <div><b>${state.connections.length}</b>Connections Made</div>
+        </div>
+        ${state.achievements.length? `<div class="achv-row">${state.achievements.map(a=>`<span class="achv">🏅 ${a}</span>`).join('')}</div>`:''}
+        <div class="modal-actions" style="justify-content:center;margin-top:26px;">
+          <button class="btn" id="playAgainBtn">Choose Another Case</button>
+          <button class="btn ghost" id="lbBtn">View Leaderboard</button>
+          <button class="btn ghost" id="homeBtn2">Home</button>
+        </div>
+      </div>
+    </div>
+  `;
+  qs('#playAgainBtn').addEventListener('click',()=>{ sfx.click(); goTo('caseSelect'); });
+  qs('#lbBtn').addEventListener('click',()=>{ sfx.click(); goTo('leaderboard'); });
+  qs('#homeBtn2').addEventListener('click',()=>{ sfx.click(); goTo('home'); });
+}
+
+/* =========================================================
+   HINTS & ACHIEVEMENTS
+========================================================= */
+function showHint(){
+  const kase=getCase();
+  if(state.hintsLeft<=0){ sfx.error(); toast('No hints remaining.'); return; }
+  state.hintsLeft--;
+  const idx = kase.hints.length - state.hintsLeft - 1 >=0 ? (kase.hints.length-1-state.hintsLeft) : 0;
+  const hint = kase.hints[Math.min(idx,kase.hints.length-1)] || kase.hints[0];
+  persistSave(); renderHud();
+  sfx.click();
+  toast('💡 '+hint);
+}
+
+function grantAchievement(name){
+  if(!state.achievements.includes(name)){
+    state.achievements.push(name);
+    toast('🏅 Achievement unlocked: '+name);
+    sfx.success();
+    persistSave();
+  }
+}
+function checkAchievements(finishing){
+  const kase=getCase();
+  if(!kase) return;
+  if(state.cluesCollected.length>=1) grantAchievement('First Clue');
+  const totalClues = Object.keys(kase.clueMeta).length;
+  if(state.cluesCollected.length>=totalClues-1) grantAchievement('Thorough Detective');
+  if(state.puzzlesSolved.cipher) grantAchievement('Codebreaker');
+  if(state.puzzlesSolved.code) grantAchievement('Lock Picker');
+  if(Object.values(state.suspectChats).filter(h=>h&&h.length>0).length>=kase.suspects.length) grantAchievement('Grilled Every Suspect');
+  if(finishing && state.finished && state.finished.won){
+    grantAchievement('Case Closed');
+    if(state.finished.timeUsed < DIFFICULTY[state.difficulty].seconds*0.4) grantAchievement('Speed Detective');
+    const stats=getStats();
+    if(stats.solvedCaseIds.length>=3) grantAchievement('Rising Detective');
+    if(stats.solvedCaseIds.length>=CASES.length) grantAchievement('Master Detective');
+  }
+}
+
+/* =========================================================
+   INIT
+========================================================= */
+goTo('home');
+</script>
+</body>
+</html>
